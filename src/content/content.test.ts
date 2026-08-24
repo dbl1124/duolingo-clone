@@ -43,8 +43,19 @@ describe('identifiers', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('prefixes every card id with its unit id', () => {
-    for (const c of allCards) expect(c.id.startsWith(`${c.unitId}.`)).toBe(true);
+  it('prefixes every word and sentence id with its unit id', () => {
+    for (const c of allCards) {
+      // Patterns are named for the construction they drill, not the unit they
+      // sit in — a frame can outlive being moved between units.
+      if (c.kind === 'pattern') continue;
+      expect(c.id.startsWith(`${c.unitId}.`)).toBe(true);
+    }
+  });
+
+  it('names every pattern id with the p. prefix', () => {
+    for (const c of allCards) {
+      if (c.kind === 'pattern') expect(c.id.startsWith('p.')).toBe(true);
+    }
   });
 });
 

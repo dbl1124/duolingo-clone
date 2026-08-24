@@ -4,12 +4,17 @@ import type { Card } from '../content/types';
 import { checkAnswer, missedOnlyAccents, type Verdict } from '../lib/answer';
 import { choicesFor } from '../lib/distractors';
 import { mulberry32 } from '../session/builder';
+import { realizePattern } from '../session/generate';
 import { listenOnce, recognitionSupported, type ListenError } from '../speech/asr';
 import { Grade } from '../srs/fsrs';
 import { AudioButton, RichText, SlowAudioButton } from './ui';
 
 export interface ExerciseProps {
   card: Card;
+  /** First time this card has been seen, so a pattern can introduce its frame. */
+  isNew?: boolean;
+  /** Whether a word has been introduced — gates which fillers a pattern may use. */
+  isKnown?: (cardId: string) => boolean;
   audioRate: number;
   showHooks: boolean;
   seed: number;
@@ -741,6 +746,165 @@ export function Speak({ card, audioRate, showHooks, onGrade }: ExerciseProps) {
               </button>
             </div>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+/* ---------------------------------------------------------------- build ---- */
+
+/**
+ * Build a sentence you have never seen.
+ *
+ * The exercise the rest of the app was missing. Everywhere else the answer exists
+ * somewhere to be recalled; here it is generated from a frame plus words the
+ * learner already knows, so the only route to it is construction. Getting it right
+ * is evidence of the grammar, not of the memory.
+ *
+ * The frame is named above the prompt on purpose. This is not a puzzle about
+ * *which* rule applies — the rules were taught explicitly, and hiding which one is
+ * in play would turn a grammar exercise into a guessing game.
+ */
+export function Build({ card, audioRate, showHooks, seed, isNew, isKnown, onGrade }: ExerciseProps) {
+  const [intro, setIntro] = useState(false);
+  const [value, setValue] = useState('');
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const elapsed = useTimer(card.id);
+
+  const known = isKnown ?? (() => true);
+  const built = useMemo(
+    () =>
+      card.kind === 'pattern' ? realizePattern(card.pattern, known, mulberry32(seed)) : null,
+    // `known` is derived from the learner's whole state; re-deriving the sentence
+    // on every keystroke would change the question mid-answer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [card.id, seed],
+  );
+
+  useEffect(() => {
+    setIntro(!!isNew);
+    setValue('');
+    setVerdict(null);
+    if (!isNew) inputRef.current?.focus();
+  }, [card.id, isNew]);
+
+  // A pattern that cannot currently generate — every filler slot empty — would be
+  // a dead end mid-session, so it degrades to the ordinary produce exercise.
+  if (card.kind !== 'pattern' || !built) {
+    return <Produce card={card} audioRate={audioRate} showHooks={showHooks} seed={seed} onGrade={onGrade} />;
+  }
+
+  if (intro) {
+    return (
+      <div className="stack">
+        <div className="card">
+          <div className="row">
+            <span className="pill new">New pattern</span>
+          </div>
+          <h2 style={{ marginTop: 12, marginBottom: 6 }}>{card.pattern.title}</h2>
+          <div className="note">
+            <RichText>{card.pattern.example}</RichText>
+          </div>
+          <p className="small dim" style={{ marginTop: 12, marginBottom: 0 }}>
+            From here on this one gives you a different sentence every time, built from
+            words you already know. There is nothing to memorise — you assemble it.
+          </p>
+        </div>
+        <div className="spacer" />
+        <div className="footer-actions">
+          <button type="button" className="btn-primary" onClick={() => setIntro(false)}>
+            Try one
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const accepted = [built.es, ...built.esAlt];
+  const submit = () => {
+    if (verdict !== null || value.trim() === '') return;
+    setVerdict(checkAnswer(value, accepted));
+  };
+
+  return (
+    <div className="stack">
+      <div className="card">
+        <div className="prompt-label">Build this sentence</div>
+        <div className="prompt">{built.en}</div>
+        <div className="frame-name">{card.pattern.title}</div>
+      </div>
+
+      <div>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && submit()}
+          placeholder="Build it in Spanish"
+          disabled={verdict !== null}
+          autoCapitalize="none"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck={false}
+          enterKeyHint="done"
+          aria-label={`Build the Spanish for: ${built.en}`}
+        />
+        <div className="small dim" style={{ marginTop: 6 }}>
+          You have not seen this exact sentence — put it together from the pattern.
+        </div>
+      </div>
+
+      {verdict !== null && (
+        <div className={`feedback ${verdict}`}>
+          <div className="verdict">
+            {verdict === 'correct'
+              ? 'Correct — you built that'
+              : verdict === 'close'
+                ? 'Almost — just a typo'
+                : 'Not quite'}
+          </div>
+          <div className="row">
+            <div className="answer-es">{built.es}</div>
+            <div className="spacer" />
+            <AudioButton text={built.es} rate={audioRate} />
+          </div>
+          <div className="gloss">{built.en}</div>
+          {showHooks && (
+            <div className="hook small" style={{ marginTop: 8 }}>
+              <RichText>{card.pattern.example}</RichText>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="spacer" />
+      <div className="footer-actions">
+        {verdict === null ? (
+          <>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={submit}
+              disabled={value.trim() === ''}
+            >
+              Check
+            </button>
+            <button type="button" className="btn-ghost" onClick={() => setVerdict('wrong')}>
+              I don't know — show me
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => onGrade(gradeFor(verdict, elapsed()), elapsed())}
+          >
+            Continue
+          </button>
         )}
       </div>
     </div>

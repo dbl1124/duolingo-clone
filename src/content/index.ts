@@ -1,3 +1,4 @@
+import { patterns } from './patterns.ts';
 import type { Card, LexItem, Sentence, Unit } from './types.ts';
 import { unit01 } from './units/unit01.ts';
 import { unit02 } from './units/unit02.ts';
@@ -30,6 +31,11 @@ export const units: Unit[] = [
 export const allCards: Card[] = units.flatMap((u) => [
   ...u.items.map((item): Card => ({ kind: 'lex', id: item.id, unitId: u.id, item })),
   ...u.sentences.map((s): Card => ({ kind: 'sentence', id: s.id, unitId: u.id, sentence: s })),
+  // Patterns come after the unit whose grammar they drill: you meet the frame
+  // once the words that fill it are in place.
+  ...patterns
+    .filter((p) => p.unitId === u.id)
+    .map((p): Card => ({ kind: 'pattern', id: p.id, unitId: u.id, pattern: p })),
 ]);
 
 const cardIndex = new Map<string, Card>(allCards.map((c) => [c.id, c]));
@@ -53,18 +59,27 @@ export function cardsForUnit(unitId: string): Card[] {
   return allCards.filter((c) => c.unitId === unitId);
 }
 
-/** The Spanish surface form, whatever kind of card it is. */
+/**
+ * The Spanish surface form.
+ *
+ * A pattern has no fixed Spanish — the sentence is generated per review — so it
+ * falls back to its worked example. Nothing routes a pattern here in practice;
+ * this exists so a future caller cannot crash on one.
+ */
 export function spanishOf(card: Card): string {
+  if (card.kind === 'pattern') return card.pattern.example;
   return card.kind === 'lex' ? card.item.es : card.sentence.es;
 }
 
-/** The English prompt, whatever kind of card it is. */
+/** The English prompt. Patterns fall back to their title, for the same reason. */
 export function englishOf(card: Card): string {
+  if (card.kind === 'pattern') return card.pattern.title;
   return card.kind === 'lex' ? card.item.en : card.sentence.en;
 }
 
 /** Every Spanish string that should be accepted as a correct answer. */
 export function acceptedSpanish(card: Card): string[] {
+  if (card.kind === 'pattern') return [card.pattern.example];
   return card.kind === 'lex'
     ? [card.item.es, ...(card.item.esAlt ?? [])]
     : [card.sentence.es, ...(card.sentence.esAlt ?? [])];
@@ -72,6 +87,7 @@ export function acceptedSpanish(card: Card): string[] {
 
 /** Every English string that should be accepted as a correct answer. */
 export function acceptedEnglish(card: Card): string[] {
+  if (card.kind === 'pattern') return [card.pattern.title];
   return card.kind === 'lex' ? [card.item.en, ...(card.item.enAlt ?? [])] : [card.sentence.en];
 }
 
@@ -89,5 +105,8 @@ export function lifelines(): LexItem[] {
 }
 
 export const totalCards = allCards.length;
+
+export { patterns, getPattern } from './patterns.ts';
+export type { Pattern } from './patterns.ts';
 
 export type { Card, LexItem, Sentence, Unit } from './types.ts';

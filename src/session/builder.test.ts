@@ -362,3 +362,59 @@ describe('opening recap', () => {
     expect(f.total).toBeGreaterThanOrEqual(WARMUP_COUNT);
   });
 });
+
+describe('sentence patterns in a session', () => {
+  /** Everything except patterns, introduced and not due — a learner mid-course. */
+  function throughUnit(n: number): MemoryStates {
+    const states: MemoryStates = {};
+    const upTo = Array.from({ length: n }, (_, i) => `u${i + 1}`);
+    for (const c of allCards) {
+      if (c.kind === 'pattern' || !upTo.includes(c.unitId)) continue;
+      states[c.id] = { ...notDue(), reps: 4, stability: 20 };
+    }
+    return states;
+  }
+
+  it('offers no patterns to a beginner — the slots have nothing to draw on', () => {
+    expect(newCandidates({}).some((c) => c.kind === 'pattern')).toBe(false);
+  });
+
+  it('offers patterns once their words are known', () => {
+    const candidates = newCandidates(throughUnit(9));
+    const patternCards = candidates.filter((c) => c.kind === 'pattern');
+    expect(patternCards.length).toBeGreaterThan(4);
+  });
+
+  it('introduces a pattern by building, never as a flashcard', () => {
+    // A pattern has no fixed Spanish to put on a card, and a multiple choice over
+    // frame names would test nothing at all.
+    const session = buildSession(throughUnit(9), cfg(), currentRetrievability);
+    const patternItems = session.filter((i) => i.card.kind === 'pattern');
+    expect(patternItems.length).toBeGreaterThan(0);
+    expect(patternItems.every((i) => i.mode === 'build')).toBe(true);
+  });
+
+  it('only ever gives a pattern the build mode, new or reviewed', () => {
+    const states = throughUnit(9);
+    for (const c of allCards) {
+      if (c.kind !== 'pattern') continue;
+      states[c.id] = { ...overdue(3), reps: 6, stability: 20 };
+    }
+    const session = buildSession(states, cfg(), currentRetrievability);
+    const modes = new Set(
+      session.filter((i) => i.card.kind === 'pattern').map((i) => i.mode),
+    );
+    expect([...modes]).toEqual(['build']);
+  });
+
+  it('never puts a pattern in the opening recap', () => {
+    const states = throughUnit(9);
+    for (const c of allCards) {
+      if (c.kind === 'pattern') states[c.id] = { ...overdue(9), reps: 6, stability: 20 };
+    }
+    const session = buildSession(states, cfg({ warmup: true }), currentRetrievability);
+    const recap = session.filter((i) => i.phase === 'warmup');
+    expect(recap.length).toBeGreaterThan(0);
+    expect(recap.every((i) => i.card.kind === 'lex')).toBe(true);
+  });
+});

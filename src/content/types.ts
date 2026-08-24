@@ -10,6 +10,8 @@
  * bolted on beside it.
  */
 
+import type { Pattern } from './patterns.ts';
+
 export type Pos =
   | 'noun'
   | 'verb'
@@ -134,7 +136,14 @@ export interface Unit {
   pron?: PronFocus;
 }
 
-/** Every schedulable thing, flattened. */
+/**
+ * Every schedulable thing, flattened.
+ *
+ * A pattern card is different in kind from the other two: it carries no fixed
+ * text. What is scheduled is the *frame*, and the sentence is generated fresh at
+ * every review, so the answer can never be recalled — only constructed.
+ */
 export type Card =
   | { kind: 'lex'; id: string; unitId: string; item: LexItem }
-  | { kind: 'sentence'; id: string; unitId: string; sentence: Sentence };
+  | { kind: 'sentence'; id: string; unitId: string; sentence: Sentence }
+  | { kind: 'pattern'; id: string; unitId: string; pattern: Pattern };

@@ -16,7 +16,7 @@ import {
 import { loadAudioManifest } from './speech/audio';
 import { recognitionSupported } from './speech/asr';
 import { primeVoices, speechSupported } from './speech/tts';
-import { currentRetrievability } from './srs/fsrs';
+import { currentRetrievability, isNew } from './srs/fsrs';
 import { clearSessionLog, init, useApp } from './store/state';
 
 type Tab = 'practice' | 'progress' | 'reference' | 'settings';
@@ -98,6 +98,16 @@ export default function App() {
     [state.states, cfg],
   );
 
+  // A word counts as known once it has been introduced — met at least once, not
+  // merely present in the curriculum.
+  const isKnown = useCallback(
+    (cardId: string) => {
+      const s = state.states[cardId];
+      return !!s && !isNew(s);
+    },
+    [state.states],
+  );
+
   const finish = useCallback((summary: SessionSummary) => {
     setNow(Date.now());
     setScreen({ view: 'complete', summary });
@@ -124,6 +134,7 @@ export default function App() {
         <Session
           items={screen.items}
           settings={state.settings}
+          isKnown={isKnown}
           onFinish={finish}
           onQuit={backToTabs}
         />

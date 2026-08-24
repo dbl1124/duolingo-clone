@@ -2,6 +2,7 @@ import { allCards, curriculumOrder, getUnit, units } from '../content';
 import type { Card } from '../content/types';
 import type { MemoryState } from '../srs/fsrs';
 import { isNew } from '../srs/fsrs';
+import { patternAvailability } from './generate';
 import type { ExerciseMode, LadderCapabilities } from './ladder';
 import { pickMode } from './ladder';
 
@@ -97,8 +98,16 @@ export function dueCards(states: MemoryStates, now: number): Card[] {
 
 export function newCandidates(states: MemoryStates): Card[] {
   const open = new Set(openUnitIds(states));
+  const isKnown = (id: string) => hasBeenIntroduced(states[id]);
   return allCards
-    .filter((c) => open.has(c.unitId) && !hasBeenIntroduced(states[c.id]))
+    .filter((c) => {
+      if (!open.has(c.unitId) || hasBeenIntroduced(states[c.id])) return false;
+      // A pattern waits until its slots have enough known words to vary. Offering
+      // it earlier would either fail to generate or produce the same sentence
+      // every time, which is a fixed phrase wearing a costume.
+      if (c.kind === 'pattern') return patternAvailability(c.pattern, isKnown).available;
+      return true;
+    })
     .sort((a, b) => curriculumOrder(a.id) - curriculumOrder(b.id));
 }
 
@@ -222,7 +231,8 @@ export function warmupItems(
   const fromUnits = [unitId, previous?.id].filter(Boolean) as string[];
   const pool = allCards
     .filter((c) => fromUnits.includes(c.unitId) && eligible(c.id))
-    // Words and short phrases; a full sentence makes a poor quick-fire question.
+    // Words and short phrases only: a full sentence makes a poor quick-fire
+    // question, and a generated one is a different exercise entirely.
     .filter((c) => c.kind === 'lex')
     .map((c) => {
       const state = states[c.id]!;
@@ -297,7 +307,10 @@ export function buildSession(
   // words inside it, and interleaving would break that.
   const newItems: SessionItem[] = fresh.map((card) => ({
     card,
-    mode: 'teach' as const,
+    // A pattern has nothing to show on a flashcard: there is no fixed Spanish to
+    // read, and a multiple-choice over frame names would test nothing. Its first
+    // encounter is the build exercise, which introduces the frame itself.
+    mode: (card.kind === 'pattern' ? 'build' : 'teach') as ExerciseMode,
     isNew: true,
     phase: 'main' as const,
   }));

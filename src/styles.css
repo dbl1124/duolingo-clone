@@ -561,6 +561,18 @@ mark {
   text-align: right;
 }
 
+/* The frame being drilled, named under the prompt. Two competing labels above
+   the prompt wrap into each other at large text sizes; below it, this reads as
+   what it is — a note about which rule is in play, not a second heading. */
+.frame-name {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
 /* ---------- progress ---------- */
 
 .meter {

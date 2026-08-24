@@ -21,7 +21,14 @@ import type { MemoryState } from '../srs/fsrs';
  * challenging-but-supported: failing a spoken prompt drops you to a typed one
  * rather than making you fail the same wall repeatedly.
  */
-export type ExerciseMode = 'teach' | 'recognize' | 'listen' | 'cloze' | 'produce' | 'speak';
+export type ExerciseMode =
+  | 'teach'
+  | 'recognize'
+  | 'listen'
+  | 'cloze'
+  | 'produce'
+  | 'speak'
+  | 'build';
 
 export interface LadderCapabilities {
   /** Speech synthesis is available for listening exercises. */
@@ -37,7 +44,10 @@ export const MODE_RANK: Record<ExerciseMode, number> = {
   listen: 2,
   cloze: 3,
   produce: 4,
-  speak: 5,
+  // Building an unseen sentence from a frame asks for more than reproducing a
+  // memorised one, so it ranks above plain production.
+  build: 5,
+  speak: 6,
 };
 
 /** Stability (days) at which an item is solid enough to be worth saying aloud. */
@@ -52,6 +62,11 @@ export function modesFor(
   state: MemoryState | undefined,
   caps: LadderCapabilities,
 ): ExerciseMode[] {
+  // A pattern has no fixed answer to recognise or listen to, so it does not climb
+  // the ladder — it is construction from the first review to the last. Its
+  // difficulty rises on its own as more fillers become available.
+  if (card.kind === 'pattern') return ['build'];
+
   if (!state || state.reps === 0 || state.lastReview === null) return ['teach'];
 
   const isSentence = card.kind === 'sentence';

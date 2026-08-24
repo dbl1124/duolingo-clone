@@ -4,7 +4,7 @@ import type { SessionItem } from '../session/builder';
 import { Grade } from '../srs/fsrs';
 import { gradeCard } from '../store/state';
 import type { Settings } from '../store/state';
-import { Cloze, Listen, Produce, Recognize, Speak, Teach } from './exercises';
+import { Build, Cloze, Listen, Produce, Recognize, Speak, Teach } from './exercises';
 import { SessionProgress } from './ui';
 
 export interface SessionSummary {
@@ -28,11 +28,14 @@ export interface SessionSummary {
 export function Session({
   items,
   settings,
+  isKnown,
   onFinish,
   onQuit,
 }: {
   items: SessionItem[];
   settings: Settings;
+  /** Which words the learner has met — pattern slots draw only from these. */
+  isKnown: (cardId: string) => boolean;
   onFinish: (summary: SessionSummary) => void;
   onQuit: () => void;
 }) {
@@ -46,8 +49,11 @@ export function Session({
 
   const current = queue[index];
   const warmupTotal = useMemo(() => items.filter((i) => i.phase === 'warmup').length, [items]);
+  // Counted by distinct card, not by position: a missed recap question is
+  // requeued later in the sitting, and counting appearances would show
+  // "Quick check · 4 of 3".
   const warmupIndex = useMemo(
-    () => queue.slice(0, index).filter((i) => i.phase === 'warmup').length,
+    () => new Set(queue.slice(0, index).filter((i) => i.phase === 'warmup').map((i) => i.card.id)).size,
     [queue, index],
   );
   const newLearned = useMemo(() => items.filter((i) => i.isNew).length, [items]);
@@ -162,7 +168,9 @@ export function Session({
             ? Cloze
             : current.mode === 'speak'
               ? Speak
-              : Produce;
+              : current.mode === 'build'
+                ? Build
+                : Produce;
 
   return (
     <div className="stack">
@@ -171,7 +179,7 @@ export function Session({
         <div className="row small dim session-meta">
           <span className="session-pos">
             {current.phase === 'warmup'
-              ? `Quick check · ${warmupIndex + 1} of ${warmupTotal}`
+              ? `Quick check · ${Math.min(warmupIndex + 1, warmupTotal)} of ${warmupTotal}`
               : `${index + 1} of ${queue.length}`}
           </span>
           <div className="spacer" />
@@ -185,6 +193,8 @@ export function Session({
         audioRate={settings.audioRate}
         showHooks={settings.showHooks}
         seed={index * 7919 + current.card.id.length}
+        isKnown={isKnown}
+        isNew={current.isNew}
         promptLabel={
           current.phase === 'warmup'
             ? current.mode === 'produce'
