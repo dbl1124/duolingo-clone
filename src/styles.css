@@ -710,6 +710,34 @@ mark {
   flex-shrink: 0;
 }
 
+/* Raw voice list, for working out why a voice is missing. */
+.diag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.diag-list li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+}
+
+.diag-list code {
+  font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  background: var(--surface-2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.85em;
+  color: var(--text-dim);
+}
+
 /* ---------- misc ---------- */
 
 .pill {

@@ -1,16 +1,24 @@
 /*
  * Service worker.
  *
- * Stale-while-revalidate over same-origin GETs. Vite fingerprints its output, so
- * a hashed asset is immutable and caching it aggressively is safe; the HTML entry
- * point is the only thing that changes at a stable URL, and revalidating in the
- * background keeps it fresh without ever blocking a launch on the network.
+ * Two different strategies, because the two kinds of request want opposite things.
  *
- * The practical goal is that a session works on a plane, on a subway, and on a
- * bad hotel connection. All the content ships in the bundle and all progress is
- * local, so there is nothing here that needs a server.
+ * **Navigations are network-first.** index.html lives at a stable URL and is the
+ * file that points at the current hashed bundle, so serving it from cache first
+ * means a new build does not arrive until the *second* launch after it ships —
+ * you fix something, the user reopens the app, and nothing has changed. It is
+ * about 1KB, so trying the network costs almost nothing, and the cached copy is
+ * still there when there is no network.
+ *
+ * **Everything else is stale-while-revalidate.** Vite fingerprints its output, so
+ * a hashed asset is immutable: if the URL matches, the bytes match, and serving
+ * from cache is always correct.
+ *
+ * The goal is that a session works on a plane, on a subway, and on a bad hotel
+ * connection. All the content ships in the bundle and all progress is local, so
+ * nothing here needs a server.
  */
-const CACHE = 'hablo-v1';
+const CACHE = 'hablo-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -33,6 +41,37 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/** Network first, falling back to whatever was cached. For HTML. */
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const copy = response.clone();
+      void caches.open(CACHE).then((cache) => cache.put(request, copy));
+    }
+    return response;
+  } catch {
+    const cached = (await caches.match(request)) || (await caches.match('./index.html'));
+    if (cached) return cached;
+    throw new Error('offline and nothing cached');
+  }
+}
+
+/** Serve the cached copy immediately, refresh it in the background. For assets. */
+async function staleWhileRevalidate(request) {
+  const cached = await caches.match(request);
+  const network = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        const copy = response.clone();
+        void caches.open(CACHE).then((cache) => cache.put(request, copy));
+      }
+      return response;
+    })
+    .catch(() => cached);
+  return cached || network;
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
@@ -40,23 +79,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      const network = fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            void caches.open(CACHE).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => cached);
+  const isNavigation =
+    request.mode === 'navigate' || (request.destination === '' && request.headers.get('accept')?.includes('text/html'));
 
-      // Navigations fall back to the cached shell so a cold offline launch works.
-      if (request.mode === 'navigate') {
-        return network.catch(() => caches.match('./index.html'));
-      }
-      return cached || network;
-    }),
-  );
+  event.respondWith(isNavigation ? networkFirst(request) : staleWhileRevalidate(request));
 });

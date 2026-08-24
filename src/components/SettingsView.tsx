@@ -4,8 +4,11 @@ import {
   type RankedVoice,
   availableSpanishVoices,
   primeVoices,
+  rawVoices,
+  refreshVoices,
   setPreferredVoice,
   speak,
+  subscribeVoices,
 } from '../speech/tts';
 import { exportBackup, importBackup, isBackup, resetAll } from '../store/db';
 import type { Settings } from '../store/state';
@@ -24,17 +27,28 @@ const SAMPLE = 'Disculpe, ¿me da un café, por favor?';
  */
 function VoicePicker({ settings }: { settings: Settings }) {
   const [voices, setVoices] = useState<RankedVoice[]>([]);
+  const [all, setAll] = useState<{ name: string; lang: string; local: boolean }[]>([]);
   const [previewing, setPreviewing] = useState<string | null>(null);
+  const [rescanned, setRescanned] = useState(false);
+
+  const sync = () => {
+    setVoices([...availableSpanishVoices()]);
+    setAll(rawVoices().map((v) => ({ name: v.name, lang: v.lang, local: v.localService })));
+  };
 
   useEffect(() => {
-    let alive = true;
-    void primeVoices(settings.voiceURI).then(() => {
-      if (alive) setVoices(availableSpanishVoices());
-    });
-    return () => {
-      alive = false;
-    };
+    // Stay subscribed: iOS reports voices in more than one batch, and a voice
+    // downloaded in Settings can land in a later one.
+    const unsubscribe = subscribeVoices(sync);
+    void primeVoices(settings.voiceURI).then(sync);
+    return unsubscribe;
   }, [settings.voiceURI]);
+
+  const rescan = () => {
+    refreshVoices();
+    sync();
+    setRescanned(true);
+  };
 
   const preview = (voiceURI: string | null, key: string) => {
     setPreviewing(key);
@@ -51,23 +65,21 @@ function VoicePicker({ settings }: { settings: Settings }) {
     preview(voiceURI, key);
   };
 
-  if (voices.length === 0) {
-    return (
-      <p className="small dim" style={{ marginBottom: 0 }}>
-        No Spanish voices found on this device yet. On iPhone they live in Settings →
-        Accessibility → Spoken Content → Voices → Spanish.
-      </p>
-    );
-  }
-
   const activeKey = settings.voiceURI ?? 'auto';
 
   return (
     <>
-      <p className="small dim">
-        Tap a voice to hear it and switch to it. Quality varies a lot between them —
-        the ones marked <em>enhanced</em> are worth having.
-      </p>
+      {voices.length === 0 ? (
+        <p className="small dim">
+          No Spanish voices reported by this browser yet. Tap Rescan below, then check
+          what it found.
+        </p>
+      ) : (
+        <p className="small dim">
+          Tap a voice to hear it and switch to it. Quality varies a lot between them —
+          the ones marked <em>enhanced</em> are worth having.
+        </p>
+      )}
 
       <ul className="list-reset voice-list">
         <li>
@@ -112,6 +124,44 @@ function VoicePicker({ settings }: { settings: Settings }) {
           </li>
         ))}
       </ul>
+
+      <div className="row" style={{ marginTop: 14, gap: 10 }}>
+        <button type="button" className="btn-secondary" onClick={rescan}>
+          Rescan voices
+        </button>
+      </div>
+      {rescanned && (
+        <p className="small dim" style={{ marginTop: 8, marginBottom: 0 }}>
+          Found {all.length} {all.length === 1 ? 'voice' : 'voices'} in total,{' '}
+          {voices.length} Spanish.
+        </p>
+      )}
+
+      <details className="expander" style={{ marginTop: 14 }}>
+        <summary>My new voice isn't listed</summary>
+        <div className="small" style={{ marginTop: 10 }}>
+          <p>
+            Below is every voice this browser reports, exactly as it reports it. If the
+            voice you downloaded is not in this list, the browser is not exposing it to
+            web pages — that is a Safari limitation, not something the app can reach
+            around.
+          </p>
+          <p>
+            Worth trying first: fully close the app (swipe it away from the app
+            switcher, not just background it), reopen it, then tap Rescan. iOS often
+            only publishes newly downloaded voices to a freshly launched process.
+          </p>
+          <ul className="list-reset diag-list">
+            {all.length === 0 && <li className="dim">Nothing reported yet.</li>}
+            {all.map((v) => (
+              <li key={`${v.name}-${v.lang}`}>
+                <code>{v.lang}</code> {v.name}
+                {!v.local && <span className="tag warn">network</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </details>
 
       <details className="expander" style={{ marginTop: 14 }}>
         <summary>All of these sound robotic — what now?</summary>
@@ -344,6 +394,10 @@ export function SettingsView({ settings }: { settings: Settings }) {
             {status}
           </p>
         )}
+
+        <p className="small dim" style={{ marginTop: 14, marginBottom: 0 }}>
+          Build {__BUILD_ID__}
+        </p>
 
         <details className="expander" style={{ marginTop: 16 }}>
           <summary>Start over</summary>

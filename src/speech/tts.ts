@@ -121,36 +121,94 @@ export function rankSpanishVoices(voices: SpeechSynthesisVoice[]): RankedVoice[]
 
 let cachedVoice: SpeechSynthesisVoice | null = null;
 let cachedRanked: RankedVoice[] = [];
+let cachedRaw: SpeechSynthesisVoice[] = [];
 let voicesReady = false;
 let pinnedURI: string | null = null;
+let listening = false;
+
+const voiceListeners = new Set<() => void>();
 
 export function speechSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
 }
 
+/** Notified whenever the device's voice list changes. */
+export function subscribeVoices(listener: () => void): () => void {
+  voiceListeners.add(listener);
+  return () => voiceListeners.delete(listener);
+}
+
 /**
- * Voices load asynchronously in most browsers and synchronously in some. Resolve
- * either way rather than assuming.
+ * Re-read the device voice list and re-resolve the active voice.
+ *
+ * Must stay cheap — it runs on every `voiceschanged`, which some engines fire
+ * several times during startup.
+ */
+export function refreshVoices(): RankedVoice[] {
+  if (!speechSupported()) return [];
+  cachedRaw = window.speechSynthesis.getVoices();
+  cachedRanked = rankSpanishVoices(cachedRaw);
+  cachedVoice = pickVoice(cachedRaw, pinnedURI);
+  if (cachedRaw.length > 0) voicesReady = true;
+  for (const l of voiceListeners) l();
+  return cachedRanked;
+}
+
+/**
+ * Stay subscribed to `voiceschanged` for the lifetime of the page.
+ *
+ * The original bug: this listener was registered with `{ once: true }` and only
+ * when the first `getVoices()` came back empty. On iOS the first call routinely
+ * returns a *partial* list — often just the built-in compact voices — and the
+ * full set, including anything downloaded through Settings, arrives in a later
+ * `voiceschanged`. Resolving on the first non-empty answer and never listening
+ * again meant a newly installed voice could never show up, no matter how many
+ * times the app was restarted.
+ */
+function startListening(): void {
+  if (listening || !speechSupported()) return;
+  listening = true;
+  window.speechSynthesis.addEventListener('voiceschanged', () => {
+    refreshVoices();
+  });
+}
+
+/**
+ * Resolve the voice list, waiting for a late-arriving one.
+ *
+ * Even a non-empty first answer gets a short grace period, because on iOS that
+ * first answer is frequently incomplete.
  */
 export function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   if (!speechSupported()) return Promise.resolve([]);
+  startListening();
+
   const existing = window.speechSynthesis.getVoices();
   if (existing.length > 0) {
     voicesReady = true;
-    return Promise.resolve(existing);
+    // Give a late `voiceschanged` a moment to land, then take whatever is there.
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(window.speechSynthesis.getVoices()), 250);
+    });
   }
+
   return new Promise((resolve) => {
-    const timeout = setTimeout(() => resolve(window.speechSynthesis.getVoices()), 1500);
-    window.speechSynthesis.addEventListener(
-      'voiceschanged',
-      () => {
-        clearTimeout(timeout);
-        voicesReady = true;
-        resolve(window.speechSynthesis.getVoices());
-      },
-      { once: true },
+    const done = () => {
+      clearTimeout(timeout);
+      voicesReady = true;
+      resolve(window.speechSynthesis.getVoices());
+    };
+    const timeout = setTimeout(
+      () => resolve(window.speechSynthesis.getVoices()),
+      2000,
     );
+    window.speechSynthesis.addEventListener('voiceschanged', done, { once: true });
   });
+}
+
+/** Every voice the browser reports, Spanish or not. For the diagnostics panel. */
+export function rawVoices(): SpeechSynthesisVoice[] {
+  return cachedRaw;
 }
 
 /**
@@ -172,10 +230,11 @@ export function pickVoice(
 }
 
 export async function primeVoices(preferredURI?: string | null): Promise<boolean> {
-  const voices = await loadVoices();
-  cachedRanked = rankSpanishVoices(voices);
   pinnedURI = preferredURI ?? null;
-  cachedVoice = pickVoice(voices, pinnedURI);
+  await loadVoices();
+  // Go through refreshVoices so cachedRaw is populated and subscribers are told,
+  // rather than duplicating the caching here and letting the two drift apart.
+  refreshVoices();
   return cachedVoice !== null;
 }
 

@@ -117,6 +117,16 @@ voice and a formant synthesiser dwarfs the gap between Spanish varieties.
 Settings lists every installed voice with a preview so the choice can be
 overridden, and explains how to download a better one.
 
+**The voice list is watched, not sampled once.** iOS reports voices in more than
+one batch: the first `getVoices()` often returns only the built-in compact
+voices, and anything downloaded through Settings arrives in a later
+`voiceschanged`. Subscribing once and caching the first non-empty answer means a
+newly installed voice can never appear, no matter how many times the app is
+restarted. The subscription is permanent, the ranking updates live, and Settings
+has a Rescan button plus a panel showing the raw list the browser reports — so
+"the browser is not exposing it" is distinguishable from "the app did not look
+again".
+
 **One card per item, not one per exercise type.** Separate cards for
 recognise/produce/speak would triple the daily review load, which a ten-minute
 session cannot absorb honestly.
