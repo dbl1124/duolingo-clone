@@ -49,7 +49,13 @@ jobs:
 
       - run: npm run build
 
+      # enablement: true turns Pages on via the API on the first run, so the repo
+      # setting does not have to be clicked by hand. If the token is not allowed
+      # to do that, this step fails and the setting has to be set once under
+      # Settings -> Pages -> Source: GitHub Actions.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
