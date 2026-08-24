@@ -1,7 +1,7 @@
 /**
  * Sentence patterns — the difference between knowing phrases and building them.
  *
- * The 107 fixed sentences elsewhere in this curriculum are memorised as blocks:
+ * The 189 fixed sentences elsewhere in this curriculum are memorised as blocks:
  * you learn "Voy a comer ahora" whole, and nothing ever forces you to assemble
  * "Vamos a estudiar el sábado" from parts. That is the gap these close. A pattern
  * is a grammatical frame with slots; every time it comes up the app fills the
@@ -14,7 +14,7 @@
  * item, and each review produces a sentence you have never seen.
  *
  * **The curriculum stops being finite.** The `ir a` pattern alone has 5 subjects ×
- * 10 infinitives × 11 time expressions — over 500 sentences from one frame.
+ * 19 infinitives × 10 time expressions — 950 sentences from one frame.
  *
  * Correctness is the whole risk here: a generator that emits wrong Spanish is
  * worse than no generator at all. So nothing is derived by rule. Conjugations are
@@ -43,6 +43,31 @@ export interface AdjectiveFiller extends Filler {
   masculine: string;
   feminine: string;
   plural: string;
+}
+
+/**
+ * A noun together with the object pronoun that replaces it. The pronoun is
+ * stored rather than derived: gender is a property of the Spanish word, not
+ * something a rule can recover from its spelling.
+ */
+export interface ObjectFiller extends Filler {
+  pronoun: 'lo' | 'la' | 'los' | 'las';
+  plural: boolean;
+}
+
+/** Something likeable. `plural` decides gusta vs gustan, which is the whole drill. */
+export interface LikeableFiller extends Filler {
+  plural: boolean;
+}
+
+/** A noun carrying its article, so an adjective can be made to agree with it. */
+export interface ThingFiller extends Filler {
+  article: 'el' | 'la';
+}
+
+/** An adjective that also knows its English comparative — "cheaper", not "more cheap". */
+export interface ComparableAdj extends AdjectiveFiller {
+  enComparative: string;
 }
 
 /** A regular verb with its present-tense forms written out. */
@@ -101,6 +126,30 @@ const INFINITIVES: Filler[] = [
   { requires: ['u9.salir'], es: 'salir', en: 'leave' },
   { requires: ['u7.tomar', 'u4.el-cafe'], es: 'tomar café', en: 'have a coffee' },
   { requires: ['u7.hablar', 'u7.el-espanol'], es: 'hablar español', en: 'speak Spanish' },
+  { requires: ['u12.cocinar'], es: 'cocinar', en: 'cook' },
+  { requires: ['u12.viajar'], es: 'viajar', en: 'travel' },
+  { requires: ['u12.bailar'], es: 'bailar', en: 'dance' },
+  { requires: ['u12.leer'], es: 'leer', en: 'read' },
+  { requires: ['u13.desayunar'], es: 'desayunar', en: 'have breakfast' },
+  { requires: ['u15.comprar', 'u15.el-pan'], es: 'comprar pan', en: 'buy bread' },
+  { requires: ['u12.escuchar', 'u12.la-musica'], es: 'escuchar música', en: 'listen to music' },
+  { requires: ['u11.ver', 'u12.la-pelicula'], es: 'ver una película', en: 'watch a film' },
+];
+
+/**
+ * Time expressions that can only sit in a past-tense sentence.
+ *
+ * Kept apart from WHEN rather than merged: "Voy a comer ayer" is exactly the
+ * error a shared pool would produce, and no test would catch it because the
+ * sentence is structurally perfect.
+ */
+const PAST_WHEN: Filler[] = [
+  { requires: ['u14.ayer'], es: 'ayer', en: 'yesterday' },
+  { requires: ['u14.anoche'], es: 'anoche', en: 'last night' },
+  { requires: ['u14.la-semana-pasada'], es: 'la semana pasada', en: 'last week' },
+  { requires: ['u3.hoy'], es: 'hoy', en: 'today' },
+  { requires: ['u9.el-lunes'], es: 'el lunes', en: 'on Monday' },
+  { requires: ['u9.el-sabado'], es: 'el sábado', en: 'on Saturday' },
 ];
 
 const WHEN: Filler[] = [
@@ -123,10 +172,53 @@ const PLACES: PlaceFiller[] = [
   { requires: ['u6.la-estacion'], article: 'la', noun: 'estación', es: 'la estación', en: 'the station' },
   { requires: ['u6.el-aeropuerto'], article: 'el', noun: 'aeropuerto', es: 'el aeropuerto', en: 'the airport' },
   { requires: ['u6.la-parada'], article: 'la', noun: 'parada', es: 'la parada', en: 'the bus stop' },
-  { requires: ['u6.el-centro'], article: 'el', noun: 'centro', es: 'el centro', en: 'downtown' },
+  { requires: ['u6.el-centro'], article: 'el', noun: 'centro', es: 'el centro', en: 'the centre' },
   { requires: ['u6.la-tienda'], article: 'la', noun: 'tienda', es: 'la tienda', en: 'the shop' },
   { requires: ['u6.la-farmacia'], article: 'la', noun: 'farmacia', es: 'la farmacia', en: 'the pharmacy' },
   { requires: ['u10.el-hospital'], article: 'el', noun: 'hospital', es: 'el hospital', en: 'the hospital' },
+  { requires: ['u15.la-panaderia'], article: 'la', noun: 'panadería', es: 'la panadería', en: 'the bakery' },
+  { requires: ['u13.la-casa'], article: 'la', noun: 'casa', es: 'la casa', en: 'the house' },
+];
+
+/** Nouns concrete enough that "I want it" is a sentence someone would say. */
+const OBJECTS: ObjectFiller[] = [
+  { requires: ['u4.el-menu'], pronoun: 'lo', plural: false, es: 'el menú', en: 'the menu' },
+  { requires: ['u4.la-cuenta'], pronoun: 'la', plural: false, es: 'la cuenta', en: 'the bill' },
+  { requires: ['u10.el-pasaporte'], pronoun: 'lo', plural: false, es: 'el pasaporte', en: 'the passport' },
+  { requires: ['u8.la-llave'], pronoun: 'la', plural: false, es: 'la llave', en: 'the key' },
+  { requires: ['u8.el-dinero'], pronoun: 'lo', plural: false, es: 'el dinero', en: 'the money' },
+  { requires: ['u12.el-libro'], pronoun: 'lo', plural: false, es: 'el libro', en: 'the book' },
+  { requires: ['u10.la-maleta'], pronoun: 'la', plural: false, es: 'la maleta', en: 'the suitcase' },
+  { requires: ['u15.los-huevos'], pronoun: 'los', plural: true, es: 'los huevos', en: 'the eggs' },
+  { requires: ['u15.las-verduras'], pronoun: 'las', plural: true, es: 'las verduras', en: 'the vegetables' },
+];
+
+/**
+ * Things and activities to like. Spanish keeps the article on the noun where
+ * English drops it — *me gusta el café* is "I like coffee", not "the coffee" —
+ * so the two sides are written out separately rather than assembled.
+ */
+const LIKEABLE: LikeableFiller[] = [
+  { requires: ['u4.el-cafe'], plural: false, es: 'el café', en: 'coffee' },
+  { requires: ['u15.el-pescado'], plural: false, es: 'el pescado', en: 'fish' },
+  { requires: ['u12.la-musica'], plural: false, es: 'la música', en: 'music' },
+  { requires: ['u4.la-comida', 'u2.mexicana'], plural: false, es: 'la comida mexicana', en: 'Mexican food' },
+  { requires: ['u4.el-taco'], plural: true, es: 'los tacos', en: 'tacos' },
+  { requires: ['u15.las-verduras'], plural: true, es: 'las verduras', en: 'vegetables' },
+  { requires: ['u12.el-libro'], plural: true, es: 'los libros', en: 'books' },
+  { requires: ['u12.viajar'], plural: false, es: 'viajar', en: 'to travel' },
+  { requires: ['u12.cocinar'], plural: false, es: 'cocinar', en: 'to cook' },
+  { requires: ['u12.bailar'], plural: false, es: 'bailar', en: 'to dance' },
+];
+
+/** Nouns worth comparing, each carrying the article its adjective must match. */
+const COMPARABLE_THINGS: ThingFiller[] = [
+  { requires: ['u3.el-hotel'], article: 'el', es: 'el hotel', en: 'the hotel' },
+  { requires: ['u6.el-mercado'], article: 'el', es: 'el mercado', en: 'the market' },
+  { requires: ['u4.el-cafe'], article: 'el', es: 'el café', en: 'the coffee' },
+  { requires: ['u4.la-comida'], article: 'la', es: 'la comida', en: 'the food' },
+  { requires: ['u6.la-tienda'], article: 'la', es: 'la tienda', en: 'the shop' },
+  { requires: ['u16.la-ciudad'], article: 'la', es: 'la ciudad', en: 'the city' },
 ];
 
 /* ---------------------------------------------------------------- patterns -- */
@@ -281,6 +373,24 @@ function adj(
   plural: string,
 ): AdjectiveFiller {
   return { requires: [requires], es: masculine, en, masculine, feminine, plural };
+}
+
+function cadj(
+  requires: string,
+  en: string,
+  enComparative: string,
+  masculine: string,
+  feminine: string,
+): ComparableAdj {
+  return {
+    requires: [requires],
+    es: masculine,
+    en,
+    enComparative,
+    masculine,
+    feminine,
+    plural: `${masculine}s`,
+  };
 }
 
 /** ¿Dónde está + place? — the single most useful question in travel. */
@@ -484,6 +594,239 @@ const serOrigin: Pattern = {
   }),
 };
 
+/* ------------------------------------------------- patterns for units 11-16 -- */
+
+/**
+ * Replacing a noun with lo / la / los / las.
+ *
+ * The prompt names the noun being stood in for, because that is the whole skill:
+ * the learner has to remember *el menú* is masculine and *la cuenta* feminine,
+ * then put the right pronoun in front of the verb. Without the noun on screen
+ * there would be no way to know which answer was wanted.
+ */
+const objectPronoun: Pattern = {
+  id: 'p.object-pronoun',
+  unitId: 'u11',
+  title: 'Replacing a noun with lo, la, los or las',
+  example: 'Lo quiero — I want it (the menu)',
+  requires: ['u11.lo'],
+  slots: {
+    thing: OBJECTS,
+    verb: [
+      { requires: ['u4.quiero'], es: 'quiero', en: 'I want' },
+      { requires: ['u8.tengo'], es: 'tengo', en: 'I have' },
+      { requires: ['u11.veo'], es: 'veo', en: 'I see' },
+      { requires: ['u7.necesito'], es: 'necesito', en: 'I need' },
+    ],
+  },
+  build: ({ thing, verb: v }) => {
+    const o = thing as ObjectFiller;
+    return {
+      es: `${cap(o.pronoun)} ${v!.es}`,
+      en: `${v!.en} ${o.plural ? 'them' : 'it'} — ${o.en}`,
+      esAlt: [],
+    };
+  },
+};
+
+/**
+ * gustar, with the agreement that trips everyone.
+ *
+ * The pronoun says whose opinion it is; the verb agrees with the *thing*. Those
+ * two facts pull in opposite directions for an English speaker, which is exactly
+ * why this needs generating rather than memorising — the only way to get
+ * "Nos gustan las verduras" right is to work it out.
+ */
+const gustar: Pattern = {
+  id: 'p.gustar',
+  unitId: 'u12',
+  title: 'Saying what someone likes (watch gusta / gustan)',
+  example: 'Me gustan los tacos — I like tacos',
+  requires: ['u12.gustar'],
+  slots: {
+    who: [
+      { requires: ['u12.me-gusta'], es: 'Me', en: 'I like' },
+      { requires: ['u12.te-gusta'], es: 'Te', en: 'You like' },
+      { requires: ['u12.le-gusta'], es: 'Le', en: 'He likes' },
+      { requires: ['u11.nos', 'u12.me-gusta'], es: 'Nos', en: 'We like' },
+    ],
+    thing: LIKEABLE,
+  },
+  build: ({ who, thing }) => {
+    const t = thing as LikeableFiller;
+    const verb = t.plural ? 'gustan' : 'gusta';
+    const es = `${who!.es} ${verb} ${t.es}`;
+    return {
+      es,
+      en: `${who!.en} ${t.en}`,
+      // Naming the person is optional in Spanish and extremely common in speech,
+      // but the pronoun still has to be there.
+      esAlt: who!.en === 'He likes' ? [`A él ${who!.es.toLowerCase()} ${verb} ${t.es}`] : [],
+    };
+  },
+};
+
+/** Reflexive daily routine — the frame, not the individual phrase. */
+const reflexiveRoutine: Pattern = {
+  id: 'p.reflexive-routine',
+  unitId: 'u13',
+  title: 'Describing your daily routine',
+  example: 'Me levanto temprano — I get up early',
+  requires: ['u13.se-refl'],
+  slots: {
+    action: [
+      { requires: ['u13.me-levanto'], es: 'Me levanto', en: 'I get up' },
+      { requires: ['u13.me-despierto'], es: 'Me despierto', en: 'I wake up' },
+      { requires: ['u13.me-acuesto'], es: 'Me acuesto', en: 'I go to bed' },
+      { requires: ['u13.me-ducho'], es: 'Me ducho', en: 'I take a shower' },
+    ],
+    when: [
+      { requires: ['u9.temprano'], es: 'temprano', en: 'early' },
+      { requires: ['u9.tarde-adv'], es: 'tarde', en: 'late' },
+      { requires: ['u5.seis'], es: 'a las seis', en: 'at six' },
+      { requires: ['u5.siete'], es: 'a las siete', en: 'at seven' },
+      { requires: ['u13.todos-los-dias'], es: 'todos los días', en: 'every day' },
+    ],
+  },
+  build: ({ action, when }) => ({
+    es: `${action!.es} ${when!.es}`,
+    en: `${action!.en} ${when!.en}`,
+    esAlt: [],
+  }),
+};
+
+/** The preterite, attached to a time that forces it. */
+const preteriteWhen: Pattern = {
+  id: 'p.preterite',
+  unitId: 'u14',
+  title: 'Saying what you did',
+  example: 'Comí mucho ayer — I ate a lot yesterday',
+  requires: ['u14.ayer'],
+  slots: {
+    action: [
+      { requires: ['u14.comi', 'u5.mucho'], es: 'Comí mucho', en: 'I ate a lot' },
+      { requires: ['u14.hable', 'u7.el-espanol'], es: 'Hablé español', en: 'I spoke Spanish' },
+      { requires: ['u14.trabaje', 'u5.mucho'], es: 'Trabajé mucho', en: 'I worked a lot' },
+      { requires: ['u14.sali', 'u9.temprano'], es: 'Salí temprano', en: 'I left early' },
+      { requires: ['u14.llegue', 'u9.tarde-adv'], es: 'Llegué tarde', en: 'I arrived late' },
+      { requires: ['u15.compre', 'u15.el-pan'], es: 'Compré pan', en: 'I bought bread' },
+      { requires: ['u14.vi', 'u2.amigo', 'u2.mi'], es: 'Vi a mi amigo', en: 'I saw my friend' },
+    ],
+    when: PAST_WHEN,
+  },
+  build: ({ action, when }) => ({
+    es: `${action!.es} ${when!.es}`,
+    en: `${action!.en} ${when!.en}`,
+    esAlt: [],
+  }),
+};
+
+/**
+ * fui a + place. Drills the a + el contraction a second time, in the past —
+ * which is where it is easiest to forget, because the verb is already taking
+ * all the attention.
+ */
+const fuiA: Pattern = {
+  id: 'p.fui-a',
+  unitId: 'u14',
+  title: 'Saying where someone went',
+  example: 'Fui al mercado ayer — I went to the market yesterday',
+  requires: ['u14.fui', 'u6.al'],
+  slots: {
+    who: [
+      { requires: ['u14.fui'], es: 'Fui', en: 'I went' },
+      { requires: ['u14.fue'], es: 'Fue', en: 'He went' },
+      { requires: ['u14.fuimos'], es: 'Fuimos', en: 'We went' },
+    ],
+    place: PLACES,
+    when: PAST_WHEN,
+  },
+  build: ({ who, place, when }) => {
+    const p = place as PlaceFiller;
+    const to = p.article === 'el' ? `al ${p.noun}` : `a la ${p.noun}`;
+    return {
+      es: `${who!.es} ${to} ${when!.es}`,
+      en: `${who!.en} to ${p.en} ${when!.en}`,
+      esAlt: [],
+    };
+  },
+};
+
+/**
+ * Comparison. The thing compared against is derived from the subject's gender
+ * rather than being a slot of its own — "el otro" has to agree with whatever it
+ * refers back to, and a second free slot would let it disagree.
+ */
+const comparison: Pattern = {
+  id: 'p.comparison',
+  unitId: 'u15',
+  title: 'Comparing two things',
+  example: 'El hotel es más barato que el otro — The hotel is cheaper than the other one',
+  requires: ['u15.mas'],
+  slots: {
+    subject: COMPARABLE_THINGS,
+    quality: [
+      cadj('u15.caro', 'expensive', 'more expensive', 'caro', 'cara'),
+      cadj('u15.barato', 'cheap', 'cheaper', 'barato', 'barata'),
+      cadj('u16.bonito', 'pretty', 'prettier', 'bonito', 'bonita'),
+      cadj('u16.pequeno', 'small', 'smaller', 'pequeño', 'pequeña'),
+      cadj('u16.grande', 'big', 'bigger', 'grande', 'grande'),
+      cadj('u12.interesante', 'interesting', 'more interesting', 'interesante', 'interesante'),
+      // No "rico" here. It only means tasty of food — of a shop or a city it
+      // means wealthy — and a pattern has no way to express a constraint that
+      // runs between two slots, so the adjective has to fit every subject.
+    ],
+  },
+  build: ({ subject, quality }) => {
+    const t = subject as ThingFiller;
+    const a = quality as ComparableAdj;
+    const form = t.article === 'la' ? a.feminine : a.masculine;
+    const other = t.article === 'la' ? 'la otra' : 'el otro';
+    return {
+      es: `${cap(t.es)} es más ${form} que ${other}`,
+      en: `${cap(t.en)} is ${a.enComparative} than the other one`,
+      esAlt: [],
+    };
+  },
+};
+
+/**
+ * hacer for the weather.
+ *
+ * Rain is deliberately left out: *llueve* is a single word with no frame to
+ * assemble, so putting it in a construction exercise would teach nothing. What
+ * this drills is "hace + noun" where English wants "is + adjective".
+ */
+const weather: Pattern = {
+  id: 'p.weather',
+  unitId: 'u16',
+  title: 'Talking about the weather',
+  example: 'Hace calor hoy — It is hot today',
+  requires: ['u14.hacer'],
+  slots: {
+    what: [
+      { requires: ['u16.hace-calor'], es: 'calor', en: 'hot' },
+      { requires: ['u16.hace-frio'], es: 'frío', en: 'cold' },
+      { requires: ['u16.hace-sol'], es: 'sol', en: 'sunny' },
+    ],
+    // Every option here has to make sense with sun, cold and heat alike. An
+    // earlier version included "por la noche", which produced the structurally
+    // perfect "Hace sol por la noche" — sunny at night.
+    where: [
+      { requires: ['u3.hoy'], es: 'hoy', en: 'today' },
+      { requires: ['u3.aqui'], es: 'aquí', en: 'here' },
+      { requires: ['u16.la-ciudad'], es: 'en la ciudad', en: 'in the city' },
+      { requires: ['u6.el-centro'], es: 'en el centro', en: 'in the centre' },
+      { requires: ['u6.el-mercado'], es: 'en el mercado', en: 'at the market' },
+    ],
+  },
+  build: ({ what, where }) => ({
+    es: `Hace ${what!.es} ${where!.es}`,
+    en: `It is ${what!.en} ${where!.en}`,
+    esAlt: [],
+  }),
+};
+
 export const patterns: Pattern[] = [
   serOrigin,
   estarMood,
@@ -496,6 +839,13 @@ export const patterns: Pattern[] = [
   irA,
   puede,
   noPuedo,
+  objectPronoun,
+  gustar,
+  reflexiveRoutine,
+  preteriteWhen,
+  fuiA,
+  comparison,
+  weather,
 ];
 
 export function getPattern(id: string): Pattern | undefined {

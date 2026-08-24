@@ -10,6 +10,12 @@ import { unit07 } from './units/unit07.ts';
 import { unit08 } from './units/unit08.ts';
 import { unit09 } from './units/unit09.ts';
 import { unit10 } from './units/unit10.ts';
+import { unit11 } from './units/unit11.ts';
+import { unit12 } from './units/unit12.ts';
+import { unit13 } from './units/unit13.ts';
+import { unit14 } from './units/unit14.ts';
+import { unit15 } from './units/unit15.ts';
+import { unit16 } from './units/unit16.ts';
 
 export const units: Unit[] = [
   unit01,
@@ -22,6 +28,12 @@ export const units: Unit[] = [
   unit08,
   unit09,
   unit10,
+  unit11,
+  unit12,
+  unit13,
+  unit14,
+  unit15,
+  unit16,
 ];
 
 /**

@@ -64,10 +64,10 @@ describe('generated Spanish', () => {
   );
 
   it('expands to a large number of distinct sentences', () => {
-    // ~1,200 today from eleven frames, against 107 fixed sentences. The floor is
-    // set well below the current figure so that adding a filler does not have to
-    // come with a test edit, but removing a whole pattern does.
-    expect(everything.length).toBeGreaterThan(1000);
+    // ~2,300 today from eighteen frames, against 189 fixed sentences. The floor
+    // is set well below the current figure so that adding a filler does not have
+    // to come with a test edit, but removing a whole pattern does.
+    expect(everything.length).toBeGreaterThan(2000);
     const distinct = new Set(everything.map((r) => r.es));
     // Some overlap is expected — "Va" serves both él and ella — but the bulk
     // must be genuinely different sentences.
@@ -89,15 +89,30 @@ describe('generated Spanish', () => {
     expect(bad.map((r) => `${r.pattern}: ${r.es}`)).toEqual([]);
   });
 
+  /**
+   * Word boundaries have to be Unicode-aware here. JavaScript's `\b` is defined
+   * over ASCII word characters, so it sees a boundary inside "panadería el" —
+   * between the accented í and the a — and reports a perfectly correct sentence
+   * as an uncontracted "a el". `\p{L}` with the u flag draws the boundary where
+   * a reader would.
+   */
   it('never emits the uncontracted "a el"', () => {
     // The whole point of the ¿cómo llego? pattern is the a + el = al contraction,
     // so producing "a el mercado" would be teaching the error it drills.
-    const bad = everything.filter((r) => /\ba el\b/.test(r.es));
+    const bad = everything.filter((r) => /(?<!\p{L})a el(?!\p{L})/u.test(r.es));
     expect(bad.map((r) => `${r.pattern}: ${r.es}`)).toEqual([]);
   });
 
+  it('still catches an uncontracted "a el" when there is one', () => {
+    // Guards the regex above against being loosened into uselessness.
+    expect(/(?<!\p{L})a el(?!\p{L})/u.test('Fui a el mercado ayer')).toBe(true);
+    expect(/(?<!\p{L})a el(?!\p{L})/u.test('Fui a la panadería el lunes')).toBe(false);
+  });
+
   it('never doubles a preposition or a conjunction', () => {
-    const bad = everything.filter((r) => /\b(a|de|que|en) \1\b/.test(r.es));
+    const bad = everything.filter((r) =>
+      /(?<!\p{L})(a|de|que|en) \1(?!\p{L})/u.test(r.es),
+    );
     expect(bad.map((r) => `${r.pattern}: ${r.es}`)).toEqual([]);
   });
 
@@ -172,6 +187,77 @@ describe('specific constructions', () => {
     const built = expandPattern(getPattern('p.tener-state')!, knowsEverything);
     expect(built.find((r) => r.en === 'I am hungry')?.es).toBe('Tengo hambre');
     expect(built.find((r) => r.en === 'We are in a hurry')?.es).toBe('Tenemos prisa');
+  });
+
+  it('picks the object pronoun from the noun it replaces', () => {
+    const built = expandPattern(getPattern('p.object-pronoun')!, knowsEverything);
+    const forNoun = (noun: string) => built.find((r) => r.en.endsWith(noun) && r.en.startsWith('I want'));
+    expect(forNoun('the menu')?.es).toBe('Lo quiero');
+    expect(forNoun('the bill')?.es).toBe('La quiero');
+    expect(forNoun('the eggs')?.es).toBe('Los quiero');
+    expect(forNoun('the vegetables')?.es).toBe('Las quiero');
+  });
+
+  it('names the noun in the prompt, or the pronoun would be unguessable', () => {
+    // Without "— the menu" on screen there is no way to know whether lo or la
+    // was wanted, and the exercise would be a coin flip.
+    const built = expandPattern(getPattern('p.object-pronoun')!, knowsEverything);
+    expect(built.every((r) => r.en.includes(' — '))).toBe(true);
+  });
+
+  it('agrees gustar with the thing liked, not the person liking it', () => {
+    const built = expandPattern(getPattern('p.gustar')!, knowsEverything);
+    expect(built.find((r) => r.en === 'I like tacos')?.es).toBe('Me gustan los tacos');
+    expect(built.find((r) => r.en === 'We like coffee')?.es).toBe('Nos gusta el café');
+    expect(built.find((r) => r.en === 'He likes vegetables')?.es).toBe('Le gustan las verduras');
+    // An infinitive stays singular however many people are doing it.
+    expect(built.find((r) => r.en === 'We like to travel')?.es).toBe('Nos gusta viajar');
+  });
+
+  it('contracts a + el in the past frame too', () => {
+    const built = esOf('p.fui-a');
+    expect(built).toContain('Fui al mercado ayer');
+    expect(built).toContain('Fui a la panadería ayer');
+    expect(built.some((x) => x.includes('al panadería'))).toBe(false);
+    expect(built.some((x) => x.includes('a la mercado'))).toBe(false);
+  });
+
+  it('agrees a comparison with the gender of what is being compared', () => {
+    const built = expandPattern(getPattern('p.comparison')!, knowsEverything);
+    expect(built.find((r) => r.en === 'The hotel is cheaper than the other one')?.es).toBe(
+      'El hotel es más barato que el otro',
+    );
+    expect(built.find((r) => r.en === 'The food is cheaper than the other one')?.es).toBe(
+      'La comida es más barata que la otra',
+    );
+    // grande and interesante have one form for both genders.
+    expect(built.find((r) => r.en === 'The city is bigger than the other one')?.es).toBe(
+      'La ciudad es más grande que la otra',
+    );
+  });
+
+  it('never builds a comparison with "más bueno"', () => {
+    // mejor exists precisely so that this is wrong, exactly as English refuses
+    // "more good".
+    expect(esOf('p.comparison').some((x) => /más (bueno|buena|malo|mala)/.test(x))).toBe(false);
+  });
+
+  it('uses hacer for the weather rather than ser or estar', () => {
+    const built = expandPattern(getPattern('p.weather')!, knowsEverything);
+    expect(built.find((r) => r.en === 'It is cold today')?.es).toBe('Hace frío hoy');
+    expect(built.every((r) => r.es.startsWith('Hace '))).toBe(true);
+  });
+
+  it('keeps past time expressions out of the future frames, and vice versa', () => {
+    // A shared time pool would happily produce "Voy a comer ayer" — structurally
+    // flawless and completely wrong, which is the kind of error no generic check
+    // would ever catch.
+    const past = /\b(ayer|anoche|la semana pasada)\b/;
+    const future = ['p.ir-a', 'p.tener-que'].flatMap(esOf);
+    expect(future.filter((x) => past.test(x))).toEqual([]);
+
+    const pastFrames = ['p.preterite', 'p.fui-a'].flatMap(esOf);
+    expect(pastFrames.filter((x) => /\bmañana\b/.test(x))).toEqual([]);
   });
 });
 

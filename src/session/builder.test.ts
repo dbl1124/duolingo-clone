@@ -409,8 +409,16 @@ describe('sentence patterns in a session', () => {
 
   it('never puts a pattern in the opening recap', () => {
     const states = throughUnit(9);
+    // Patterns from the same range only. Marking a unit-16 frame known while no
+    // unit-16 word is would make it the most advanced thing studied, and the
+    // recap would look there for vocabulary that does not exist yet — a state
+    // the availability gate never actually produces.
+    const withinRange = (id: string) =>
+      Array.from({ length: 9 }, (_, i) => `u${i + 1}`).includes(id);
     for (const c of allCards) {
-      if (c.kind === 'pattern') states[c.id] = { ...overdue(9), reps: 6, stability: 20 };
+      if (c.kind === 'pattern' && withinRange(c.unitId)) {
+        states[c.id] = { ...overdue(9), reps: 6, stability: 20 };
+      }
     }
     const session = buildSession(states, cfg({ warmup: true }), currentRetrievability);
     const recap = session.filter((i) => i.phase === 'warmup');
