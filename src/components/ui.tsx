@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { parseRich } from '../lib/richtext';
-import { speak } from '../speech/tts';
+import { play } from '../speech/audio';
 
 /** Play button for Spanish audio. Replayable without limit, by design. */
 export function AudioButton({
@@ -17,9 +17,11 @@ export function AudioButton({
   const [playing, setPlaying] = useState(false);
   const played = useRef(false);
 
-  const play = () => {
+  const start = () => {
     setPlaying(true);
-    speak(text, { rate, onEnd: () => setPlaying(false) });
+    // Recorded clip if one exists, device voice otherwise — the button does not
+    // need to know which, and onEnd fires either way.
+    play(text, { rate, onEnd: () => setPlaying(false) });
   };
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function AudioButton({
     // interacted with, and the manual button is always the real path.
     if (auto && !played.current) {
       played.current = true;
-      play();
+      start();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, auto]);
@@ -36,7 +38,7 @@ export function AudioButton({
     <button
       type="button"
       className={`btn-icon${playing ? ' active' : ''}`}
-      onClick={play}
+      onClick={start}
       aria-label={`${label}: ${text}`}
     >
       <span aria-hidden="true">{playing ? '🔊' : '🔈'}</span>

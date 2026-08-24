@@ -14,7 +14,8 @@
     "smoke": "npm run build && node scripts/smoke.mjs",
     "smoke:shots": "npm run build && node scripts/smoke.mjs --shots",
     "icons": "node scripts/make-icons.mjs",
-    "check": "npm run typecheck && npm test && npm run smoke"
+    "check": "npm run typecheck && npm test && npm run smoke",
+    "audio": "node --experimental-strip-types scripts/generate-audio.mjs"
   },
   "repository": {
     "type": "git",

@@ -1,4 +1,4 @@
-import type { Unit } from '../types';
+import type { Unit } from '../types.ts';
 
 export const unit09: Unit = {
   id: 'u9',

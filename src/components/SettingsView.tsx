@@ -10,6 +10,7 @@ import {
   speak,
   subscribeVoices,
 } from '../speech/tts';
+import { loadAudioManifest, recordedCount } from '../speech/audio';
 import { exportBackup, importBackup, isBackup, resetAll } from '../store/db';
 import type { Settings } from '../store/state';
 import { init, updateSettings } from '../store/state';
@@ -189,6 +190,77 @@ function VoicePicker({ settings }: { settings: Settings }) {
   );
 }
 
+/**
+ * Recorded-audio status.
+ *
+ * Recordings sidestep the WebKit limitation that keeps most installed system
+ * voices out of reach of a web page, so when they exist they are simply better.
+ * This reports whether any are present and offers to pull them all down at once —
+ * they are cached lazily as they play otherwise, which is fine on wifi and no use
+ * at all on a plane.
+ */
+function RecordedAudio() {
+  const [count, setCount] = useState(0);
+  const [status, setStatus] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    void loadAudioManifest().then(() => setCount(recordedCount()));
+  }, []);
+
+  const preload = async () => {
+    setBusy(true);
+    setStatus('Downloading…');
+    try {
+      const res = await fetch('./audio/manifest.json');
+      const { keys } = (await res.json()) as { keys: string[] };
+      let done = 0;
+      // Sequential on purpose: several hundred parallel requests is a good way to
+      // get throttled, and this runs in the background while Settings is open.
+      for (const key of keys) {
+        await fetch(`./audio/${key}.mp3`, { cache: 'force-cache' }).catch(() => {});
+        done++;
+        if (done % 25 === 0) setStatus(`Downloading… ${done}/${keys.length}`);
+      }
+      setStatus(`All ${keys.length} clips saved for offline use.`);
+    } catch {
+      setStatus('Could not download the audio. Check your connection and try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (count === 0) {
+    return (
+      <section className="card">
+        <div className="card-title">Recorded audio</div>
+        <p className="small dim" style={{ marginBottom: 0 }}>
+          None yet — the app is using your phone's built-in Spanish voice. Recorded audio
+          is generated separately; see <code>npm run audio</code> in the README.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="card">
+      <div className="card-title">Recorded audio</div>
+      <p className="small">
+        {count} recorded clips. These are used wherever they exist, with the device voice
+        filling any gaps.
+      </p>
+      <button type="button" className="btn-secondary" onClick={() => void preload()} disabled={busy}>
+        {busy ? 'Downloading…' : 'Save all audio for offline use'}
+      </button>
+      {status && (
+        <p className="small dim" style={{ marginTop: 10, marginBottom: 0 }}>
+          {status}
+        </p>
+      )}
+    </section>
+  );
+}
+
 export function SettingsView({ settings }: { settings: Settings }) {
   const [status, setStatus] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -242,8 +314,14 @@ export function SettingsView({ settings }: { settings: Settings }) {
         </p>
       </section>
 
+      <RecordedAudio />
+
       <section className="card">
-        <div className="card-title">Voice</div>
+        <div className="card-title">Device voice</div>
+        <p className="small dim">
+          Used for anything without a recording, and for the whole app if no recordings
+          have been generated.
+        </p>
         <VoicePicker settings={settings} />
       </section>
 

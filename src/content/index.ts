@@ -1,14 +1,14 @@
-import type { Card, LexItem, Sentence, Unit } from './types';
-import { unit01 } from './units/unit01';
-import { unit02 } from './units/unit02';
-import { unit03 } from './units/unit03';
-import { unit04 } from './units/unit04';
-import { unit05 } from './units/unit05';
-import { unit06 } from './units/unit06';
-import { unit07 } from './units/unit07';
-import { unit08 } from './units/unit08';
-import { unit09 } from './units/unit09';
-import { unit10 } from './units/unit10';
+import type { Card, LexItem, Sentence, Unit } from './types.ts';
+import { unit01 } from './units/unit01.ts';
+import { unit02 } from './units/unit02.ts';
+import { unit03 } from './units/unit03.ts';
+import { unit04 } from './units/unit04.ts';
+import { unit05 } from './units/unit05.ts';
+import { unit06 } from './units/unit06.ts';
+import { unit07 } from './units/unit07.ts';
+import { unit08 } from './units/unit08.ts';
+import { unit09 } from './units/unit09.ts';
+import { unit10 } from './units/unit10.ts';
 
 export const units: Unit[] = [
   unit01,
@@ -90,4 +90,4 @@ export function lifelines(): LexItem[] {
 
 export const totalCards = allCards.length;
 
-export type { Card, LexItem, Sentence, Unit } from './types';
+export type { Card, LexItem, Sentence, Unit } from './types.ts';

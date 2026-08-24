@@ -1,4 +1,4 @@
-import type { Unit } from '../types';
+import type { Unit } from '../types.ts';
 
 /**
  * Unit 1 deliberately teaches the conversation-repair phrases ("lifelines") in the

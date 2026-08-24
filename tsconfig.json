@@ -15,6 +15,9 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "noEmit": true,
+    // Lets the content graph be imported by a plain Node script (the audio
+    // generator) without a bundler, while Vite handles it unchanged.
+    "allowImportingTsExtensions": true,
     "types": ["vite/client"]
   },
   "include": ["src"]

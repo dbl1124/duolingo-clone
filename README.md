@@ -62,6 +62,44 @@ about a week of no visits, and a spaced-repetition app that loses its schedule i
 a total loss. Installed apps are exempt. Settings also has an export/restore
 backup as a second line of defence — worth doing once you have a few weeks in.
 
+## Recorded audio (optional, and worth it)
+
+By default the app speaks through the device's own Spanish voice. On iOS that is
+often the low-quality "compact" synthesiser, and Safari does **not** expose every
+installed system voice to a web page — a better voice downloaded through
+Settings → Accessibility → Spoken Content may simply be unreachable. Recorded
+clips sidestep that entirely.
+
+`npm run audio` generates one MP3 per distinct line of Spanish with ElevenLabs.
+The whole curriculum is **415 clips, about 5,000 characters** — comfortably
+inside a free month's quota.
+
+```bash
+npm run audio -- --dry           # what it would generate; no key needed
+export ELEVENLABS_API_KEY=...    # your key, read from the environment only
+npm run audio -- --limit 10      # try ten first, to hear the voice
+npm run audio                    # generate everything missing
+```
+
+The key is read from the environment and never written to disk or committed.
+Output goes to `public/audio/`, which Vite copies into the build — commit it and
+the deploy picks it up.
+
+Notes:
+
+- **Resumable.** Clips already on disk are skipped, so an interrupted run costs
+  nothing to restart and adding a card later generates only the new one.
+- **Optional at every point.** With no `audio/` directory the app behaves exactly
+  as before. Clips are used where they exist and the device voice fills the gaps,
+  so the curriculum can grow ahead of the recordings.
+- **Keyed by text, not card id.** Repeated lines collapse to one file, and a card
+  can be renamed without orphaning its audio. Editing the Spanish of a card
+  orphans its old clip; the generator reports orphans rather than deleting them.
+- **Pick a voice** with `ELEVENLABS_VOICE_ID`; any Spanish-capable voice in your
+  account works with the multilingual model.
+- Settings has a **"Save all audio for offline use"** button, since clips
+  otherwise cache lazily as they play — fine on wifi, no use on a plane.
+
 ## Running it locally
 
 ```bash

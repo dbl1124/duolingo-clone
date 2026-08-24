@@ -13,6 +13,7 @@ import {
   buildSession,
   unitProgress,
 } from './session/builder';
+import { loadAudioManifest } from './speech/audio';
 import { recognitionSupported } from './speech/asr';
 import { primeVoices, speechSupported } from './speech/tts';
 import { currentRetrievability } from './srs/fsrs';
@@ -34,6 +35,9 @@ export default function App() {
 
   useEffect(() => {
     void init();
+    // Which lines have a recording. Absent before any audio is generated, which
+    // is a supported state, not an error.
+    void loadAudioManifest();
   }, []);
 
   // Voices load asynchronously and the learner's pinned choice arrives with the
