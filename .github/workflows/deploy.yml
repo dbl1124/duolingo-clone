@@ -1,0 +1,66 @@
+# Builds Hablo and publishes it to GitHub Pages.
+#
+# Pages serves this repo from https://<user>.github.io/duolingo-clone/ — a
+# subpath, not a domain root. That works because vite is configured with
+# `base: './'`, so every asset reference is relative, and the manifest's
+# start_url and scope resolve against the manifest's own location.
+#
+# HTTPS matters here beyond good practice: the microphone, the service worker,
+# and installing to a home screen are all gated on a secure origin. Pages
+# provides one; a local `npm run dev` over your LAN does not.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - claude/learning-style-assessment-69ukv4
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a newer push cancel an in-flight build, but never interrupt a deployment
+# that has already started.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Typecheck and unit tests gate the deploy. The browser smoke test is left
+      # out on purpose: it needs a Chromium download, and a green build here is
+      # not worth two minutes on every push.
+      - run: npm run typecheck
+      - run: npm test
+
+      - run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

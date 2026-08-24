@@ -37,7 +37,32 @@ instead of making you fail the same wall repeatedly.
 material is introduced that day. Without this rule, a missed week compounds into a
 pile that cannot be cleared, which is how most spaced-repetition decks die.
 
-## Running it
+## Get it on your phone
+
+The app is a PWA, so it installs from the browser with no app store involved. It
+needs to be served over HTTPS first — the microphone, the service worker, and the
+install prompt are all gated on a secure origin.
+
+**One-time setup.** On GitHub: **Settings → Pages → Build and deployment →
+Source: GitHub Actions**. That's the only manual step; the workflow in
+`.github/workflows/deploy.yml` handles the rest on every push, and publishes to:
+
+```
+https://dbl1124.github.io/duolingo-clone/
+```
+
+**Install on iPhone** — open that URL in **Safari** (Chrome on iOS can't install
+PWAs properly), tap **Share**, then **Add to Home Screen**.
+
+**Install on Android** — open it in Chrome, tap the **⋮** menu, then **Install
+app** or **Add to Home screen**.
+
+Installing is not cosmetic. iOS clears site data for *uninstalled* web pages after
+about a week of no visits, and a spaced-repetition app that loses its schedule is
+a total loss. Installed apps are exempt. Settings also has an export/restore
+backup as a second line of defence — worth doing once you have a few weeks in.
+
+## Running it locally
 
 ```bash
 npm install
@@ -51,9 +76,9 @@ npm run smoke      # builds, then drives the real app in Chromium
 npm run check      # all three
 ```
 
-Add it to your phone's home screen. That is not cosmetic: iOS clears site data for
-uninstalled web pages after about a week of no visits, and installed apps are
-exempt. Settings also has an export/restore backup as a second line of defence.
+Note that `npm run dev` over your LAN is plain HTTP, so the microphone will be
+blocked and the app won't offer to install. `localhost` itself is treated as
+secure, so a desktop browser is fine for everything except testing the install.
 
 ## Layout
 
