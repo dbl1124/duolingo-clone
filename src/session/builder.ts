@@ -16,6 +16,8 @@ export interface SessionConfig {
   seed: number;
   /** Bad-day mode: reviews only, heavily shortened, no new material. */
   minimal: boolean;
+  /** Open each session with a short recap of the unit last studied. */
+  warmup: boolean;
 }
 
 export const DEFAULT_SESSION_CONFIG: Omit<SessionConfig, 'now' | 'caps'> = {
@@ -27,6 +29,7 @@ export const DEFAULT_SESSION_CONFIG: Omit<SessionConfig, 'now' | 'caps'> = {
   dailyNewCap: 6,
   seed: 1,
   minimal: false,
+  warmup: true,
 };
 
 export const MINIMAL_SESSION_ITEMS = 6;
@@ -34,11 +37,17 @@ export const MINIMAL_SESSION_ITEMS = 6;
 /** Fraction of a unit that must be introduced before the next unit opens. */
 const UNIT_GATE = 0.75;
 
+export type SessionPhase = 'warmup' | 'main';
+
 export interface SessionItem {
   card: Card;
   mode: ExerciseMode;
   isNew: boolean;
+  phase: SessionPhase;
 }
+
+/** How many questions the opening recap asks. */
+export const WARMUP_COUNT = 3;
 
 export type MemoryStates = Record<string, MemoryState | undefined>;
 
@@ -161,7 +170,93 @@ export function newAllowance(dueCount: number, cfg: SessionConfig): number {
   return Math.max(0, Math.min(cfg.dailyNewCap, room));
 }
 
-export function buildSession(states: MemoryStates, cfg: SessionConfig): SessionItem[] {
+/**
+ * The unit the learner was last working in — what "last lesson" means here.
+ *
+ * Defined as the furthest point reached in the curriculum rather than the most
+ * recent timestamp, because the two diverge after a lapse: re-reviewing a unit-1
+ * card does not mean unit 1 is where you left off.
+ */
+export function recentUnitId(states: MemoryStates): string | null {
+  let best: { unitId: string; order: number } | null = null;
+  for (const card of allCards) {
+    if (!hasBeenIntroduced(states[card.id])) continue;
+    const order = curriculumOrder(card.id);
+    if (!best || order > best.order) best = { unitId: card.unitId, order };
+  }
+  return best?.unitId ?? null;
+}
+
+/**
+ * The opening recap: a few questions on the unit last studied.
+ *
+ * This is not what the scheduler would choose on its own — FSRS would leave these
+ * items alone until they were actually due, and asking early yields less stability
+ * growth than waiting. The cost is small and bounded (three items), and it buys
+ * something the scheduler cannot: a clear sense of what last session actually
+ * stuck, before new material lands on top of it.
+ *
+ * To keep the cost as close to zero as possible, due items are chosen first — those
+ * were going to be asked today regardless, so putting them here is free. Not-yet-due
+ * items only fill the remainder, weakest memory first.
+ */
+export function warmupItems(
+  states: MemoryStates,
+  cfg: SessionConfig,
+  retrievabilityOf: (s: MemoryState, now: number) => number,
+  count: number = WARMUP_COUNT,
+): SessionItem[] {
+  if (!cfg.warmup || cfg.minimal || count <= 0) return [];
+
+  const unitId = recentUnitId(states);
+  if (!unitId) return [];
+
+  const unit = getUnit(unitId);
+  const previous = unit ? units.find((u) => u.n === unit.n - 1) : undefined;
+
+  const eligible = (id: string) => {
+    const state = states[id];
+    return hasBeenIntroduced(state) ? state! : null;
+  };
+
+  const fromUnits = [unitId, previous?.id].filter(Boolean) as string[];
+  const pool = allCards
+    .filter((c) => fromUnits.includes(c.unitId) && eligible(c.id))
+    // Words and short phrases; a full sentence makes a poor quick-fire question.
+    .filter((c) => c.kind === 'lex')
+    .map((c) => {
+      const state = states[c.id]!;
+      return {
+        card: c,
+        due: state.due <= cfg.now,
+        recall: retrievabilityOf(state, cfg.now),
+        sameUnit: c.unitId === unitId,
+      };
+    })
+    .sort(
+      (a, b) =>
+        Number(b.sameUnit) - Number(a.sameUnit) ||
+        Number(b.due) - Number(a.due) ||
+        a.recall - b.recall,
+    )
+    .slice(0, count);
+
+  // Alternate the two framings the learner asked for: produce ("how do you say…")
+  // and recognise ("what does … mean"). Starting on recognise makes the first
+  // question of the day the easier of the two.
+  return pool.map(({ card }, i) => ({
+    card,
+    mode: (i % 2 === 0 ? 'recognize' : 'produce') as ExerciseMode,
+    isNew: false,
+    phase: 'warmup' as const,
+  }));
+}
+
+export function buildSession(
+  states: MemoryStates,
+  cfg: SessionConfig,
+  retrievabilityOf: (s: MemoryState, now: number) => number = () => 0,
+): SessionItem[] {
   const rand = mulberry32(cfg.seed);
   const due = dueCards(states, cfg.now);
 
@@ -173,18 +268,28 @@ export function buildSession(states: MemoryStates, cfg: SessionConfig): SessionI
       card,
       mode: pickMode(card, states[card.id], cfg.caps, rand),
       isNew: false,
+      phase: 'main' as const,
     }));
   }
 
+  const warmup = warmupItems(states, cfg, retrievabilityOf);
+  const warmedUp = new Set(warmup.map((i) => i.card.id));
+
   const allowance = newAllowance(due.length, cfg);
   const fresh = newCandidates(states).slice(0, allowance);
-  const reviews = due.slice(0, Math.max(0, cfg.targetItems - fresh.length));
+  // Anything already asked in the recap must not be asked again in the same
+  // sitting — a second attempt minutes later measures short-term memory, not
+  // retrieval, and would feed the scheduler a flattering grade.
+  const reviews = due
+    .filter((c) => !warmedUp.has(c.id))
+    .slice(0, Math.max(0, cfg.targetItems - fresh.length - warmup.length));
 
   const reviewItems: SessionItem[] = interleaveByUnit(reviews.map((card) => ({ card }))).map(
     ({ card }) => ({
       card,
       mode: pickMode(card, states[card.id], cfg.caps, rand),
       isNew: false,
+      phase: 'main' as const,
     }),
   );
 
@@ -194,30 +299,41 @@ export function buildSession(states: MemoryStates, cfg: SessionConfig): SessionI
     card,
     mode: 'teach' as const,
     isNew: true,
+    phase: 'main' as const,
   }));
 
-  return spread(reviewItems, newItems);
+  return [...warmup, ...spread(reviewItems, newItems)];
 }
 
 /** Everything the home screen needs to describe today without building the session. */
 export interface SessionForecast {
   due: number;
   newAvailable: number;
+  warmup: number;
   total: number;
   estimatedMinutes: number;
 }
 
-export function forecast(states: MemoryStates, cfg: SessionConfig): SessionForecast {
+export function forecast(
+  states: MemoryStates,
+  cfg: SessionConfig,
+  retrievabilityOf: (s: MemoryState, now: number) => number = () => 0,
+): SessionForecast {
   const due = dueCards(states, cfg.now).length;
+  const warmup = warmupItems(states, cfg, retrievabilityOf).length;
   const allowance = newAllowance(due, cfg);
   const newAvailable = Math.min(allowance, newCandidates(states).length);
-  const reviewCount = Math.min(due, Math.max(0, cfg.targetItems - newAvailable));
-  const total = reviewCount + newAvailable;
-  // Teach screens take longer than review prompts.
-  const seconds = reviewCount * 25 + newAvailable * 45;
+  const reviewCount = Math.min(
+    Math.max(0, due - warmup),
+    Math.max(0, cfg.targetItems - newAvailable - warmup),
+  );
+  const total = reviewCount + newAvailable + warmup;
+  // Teach screens take longer than review prompts; recap questions are quickest.
+  const seconds = reviewCount * 25 + newAvailable * 45 + warmup * 15;
   return {
     due,
     newAvailable,
+    warmup,
     total,
     estimatedMinutes: Math.max(1, Math.round(seconds / 60)),
   };

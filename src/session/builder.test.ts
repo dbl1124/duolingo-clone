@@ -14,8 +14,12 @@ import {
   newAllowance,
   newCandidates,
   openUnitIds,
+  recentUnitId,
   spread,
+  warmupItems,
+  WARMUP_COUNT,
 } from './builder';
+import { currentRetrievability } from '../srs/fsrs';
 
 const T0 = 1_700_000_000_000;
 const caps = { canListen: true, canSpeak: true };
@@ -23,6 +27,9 @@ const cfg = (over: Partial<SessionConfig> = {}): SessionConfig => ({
   ...DEFAULT_SESSION_CONFIG,
   now: T0,
   caps,
+  // Off by default here so the existing count assertions stay about the main
+  // queue; the recap has its own describe block below.
+  warmup: false,
   ...over,
 });
 
@@ -266,5 +273,92 @@ describe('forecast', () => {
       () => notDue(),
     );
     expect(forecast(states, cfg()).total).toBe(0);
+  });
+});
+
+describe('opening recap', () => {
+  const u1 = units[0]!;
+  const u2 = units[1]!;
+  const u1Ids = [...u1.items.map((i) => i.id), ...u1.sentences.map((s) => s.id)];
+  const warm = (over: Partial<SessionConfig> = {}) => cfg({ warmup: true, ...over });
+
+  it('has nothing to recap for a brand-new learner', () => {
+    expect(recentUnitId({})).toBeNull();
+    expect(warmupItems({}, warm(), currentRetrievability)).toEqual([]);
+  });
+
+  it('recaps the unit the learner reached, not the one they last touched', () => {
+    // Re-reviewing an old card does not mean that is where you left off, so this
+    // tracks curriculum position rather than the most recent timestamp.
+    const states = statesFor(u1Ids, () => notDue());
+    states[u2.items[0]!.id] = notDue();
+    expect(recentUnitId(states)).toBe('u2');
+  });
+
+  it('asks WARMUP_COUNT questions once there is material', () => {
+    const items = warmupItems(statesFor(u1Ids, () => notDue()), warm(), currentRetrievability);
+    expect(items).toHaveLength(WARMUP_COUNT);
+    expect(items.every((i) => i.phase === 'warmup')).toBe(true);
+  });
+
+  it('uses only the two framings asked for, starting with the easier one', () => {
+    const items = warmupItems(statesFor(u1Ids, () => notDue()), warm(), currentRetrievability);
+    expect(items.map((i) => i.mode)).toEqual(['recognize', 'produce', 'recognize']);
+  });
+
+  it('never quizzes a word that has not been taught', () => {
+    const items = warmupItems(statesFor(u1Ids.slice(0, 8), () => notDue()), warm(), currentRetrievability);
+    expect(items.every((i) => u1Ids.slice(0, 8).includes(i.card.id))).toBe(true);
+  });
+
+  it('prefers cards that are already due, so the recap is mostly free', () => {
+    // Due cards were going to be asked today anyway. Pulling a not-yet-due card
+    // forward costs a little scheduling value, so it is the last resort.
+    const states: MemoryStates = {};
+    u1Ids.forEach((id) => (states[id] = notDue()));
+    const dueOnes = u1.items.slice(0, 2).map((i) => i.id);
+    dueOnes.forEach((id, i) => (states[id] = overdue(i + 3)));
+    const picked = warmupItems(states, warm(), currentRetrievability).map((i) => i.card.id);
+    for (const id of dueOnes) expect(picked).toContain(id);
+  });
+
+  it('quizzes words and phrases, never whole sentences', () => {
+    const items = warmupItems(statesFor(u1Ids, () => notDue()), warm(), currentRetrievability);
+    expect(items.every((i) => i.card.kind === 'lex')).toBe(true);
+  });
+
+  it('is skipped when switched off, and on a bad day', () => {
+    const states = statesFor(u1Ids, () => notDue());
+    expect(warmupItems(states, cfg({ warmup: false }), currentRetrievability)).toEqual([]);
+    expect(warmupItems(states, warm({ minimal: true }), currentRetrievability)).toEqual([]);
+  });
+
+  it('puts the recap first and never repeats it later in the session', () => {
+    const states = statesFor(u1Ids, (i) => overdue(i + 1));
+    const session = buildSession(states, warm(), currentRetrievability);
+    const recap = session.filter((i) => i.phase === 'warmup');
+    expect(recap).toHaveLength(WARMUP_COUNT);
+    expect(session.slice(0, WARMUP_COUNT).every((i) => i.phase === 'warmup')).toBe(true);
+
+    // Asking the same card twice in one sitting measures short-term memory and
+    // would hand the scheduler a flattering grade.
+    const ids = session.map((i) => i.card.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('still respects the session length cap with a recap in front', () => {
+    const states = statesFor(
+      allCards.slice(0, 60).map((c) => c.id),
+      (i) => overdue(i + 1),
+    );
+    const session = buildSession(states, warm(), currentRetrievability);
+    expect(session.length).toBeLessThanOrEqual(DEFAULT_SESSION_CONFIG.targetItems);
+  });
+
+  it('reports the recap in the forecast', () => {
+    const states = statesFor(u1Ids, () => notDue());
+    const f = forecast(states, warm(), currentRetrievability);
+    expect(f.warmup).toBe(WARMUP_COUNT);
+    expect(f.total).toBeGreaterThanOrEqual(WARMUP_COUNT);
   });
 });

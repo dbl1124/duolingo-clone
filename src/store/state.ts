@@ -25,6 +25,8 @@ export interface Settings {
   micEnabled: boolean;
   /** Show the etymology and cognate notes on teach screens. */
   showHooks: boolean;
+  /** Open each session with a few questions on the unit last studied. */
+  warmup: boolean;
   dailyNewCap: number;
   targetItems: number;
   theme: 'system' | 'light' | 'dark';
@@ -45,6 +47,7 @@ export const DEFAULT_SETTINGS: Settings = {
   voiceURI: null,
   micEnabled: true,
   showHooks: true,
+  warmup: true,
   dailyNewCap: 6,
   targetItems: 18,
   theme: 'system',

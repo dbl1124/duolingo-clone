@@ -303,6 +303,16 @@ export function SettingsView({ settings }: { settings: Settings }) {
         )}
 
         <div className="toggle-row">
+          <label htmlFor="warmup">Open with a check on the last lesson</label>
+          <input
+            id="warmup"
+            type="checkbox"
+            checked={settings.warmup}
+            onChange={(e) => set({ warmup: e.target.checked })}
+          />
+        </div>
+
+        <div className="toggle-row">
           <label htmlFor="hooks">Show word origins and cognates</label>
           <input
             id="hooks"

@@ -13,6 +13,8 @@ export interface ExerciseProps {
   audioRate: number;
   showHooks: boolean;
   seed: number;
+  /** Overrides the prompt heading, so the recap can phrase itself as a quiz. */
+  promptLabel?: string;
   onGrade: (grade: Grade, elapsedMs: number) => void;
 }
 
@@ -237,7 +239,7 @@ export function Teach({ card, audioRate, showHooks, seed, onGrade }: ExercisePro
 
 /* ------------------------------------------------------------ recognize ---- */
 
-export function Recognize({ card, audioRate, showHooks, seed, onGrade }: ExerciseProps) {
+export function Recognize({ card, audioRate, showHooks, seed, promptLabel, onGrade }: ExerciseProps) {
   const [picked, setPicked] = useState<string | null>(null);
   const elapsed = useTimer(card.id);
   const es = spanishOf(card);
@@ -251,7 +253,7 @@ export function Recognize({ card, audioRate, showHooks, seed, onGrade }: Exercis
     <div className="stack">
       <div className="card">
         <div className="row">
-          <div className="prompt-label">What does this mean?</div>
+          <div className="prompt-label">{promptLabel ?? 'What does this mean?'}</div>
           <div className="spacer" />
           <AudioButton text={es} rate={audioRate} />
         </div>
@@ -410,7 +412,7 @@ export function Listen({ card, audioRate, showHooks, seed, onGrade }: ExercisePr
 /* -------------------------------------------------------------- produce ---- */
 
 /** English prompt, type the Spanish. The generation exercise — the point of the app. */
-export function Produce({ card, audioRate, showHooks, onGrade }: ExerciseProps) {
+export function Produce({ card, audioRate, showHooks, promptLabel, onGrade }: ExerciseProps) {
   const [value, setValue] = useState('');
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -433,7 +435,7 @@ export function Produce({ card, audioRate, showHooks, onGrade }: ExerciseProps) 
   return (
     <div className="stack">
       <div className="card">
-        <div className="prompt-label">Say this in Spanish</div>
+        <div className="prompt-label">{promptLabel ?? 'Say this in Spanish'}</div>
         <div className="prompt">{en}</div>
         {card.kind === 'lex' && card.item.register && card.item.register !== 'neutral' && (
           <span className="pill">{card.item.register}</span>

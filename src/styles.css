@@ -17,6 +17,15 @@
 :root {
   --scale: 1.15;
 
+  /* Device insets, as variables so a test can simulate a notch. env() reports 0
+     on every desktop browser, which is why the overlap was invisible until it
+     ran on a real phone. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Inset plus a little breathing room, so content clears the status bar rather
+     than sitting flush against it. The topbar cancels this and re-adds its own. */
+  --app-top: calc(var(--safe-top) + 10px);
+
   --bg: #f6f4ef;
   --surface: #ffffff;
   --surface-2: #eceae3;
@@ -154,8 +163,7 @@ p:last-child {
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  padding: 0 var(--gap);
-  padding-bottom: max(var(--gap), env(safe-area-inset-bottom));
+  padding: var(--app-top) var(--gap) max(var(--gap), var(--safe-bottom));
 }
 
 .topbar {
@@ -163,7 +171,8 @@ p:last-child {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: calc(12px + env(safe-area-inset-top)) 0 12px;
+  margin-top: calc(-1 * var(--app-top));
+  padding: calc(12px + var(--safe-top)) 0 12px;
   position: sticky;
   top: 0;
   background: var(--bg);
@@ -213,7 +222,7 @@ p:last-child {
   position: sticky;
   bottom: 0;
   background: linear-gradient(to bottom, transparent, var(--bg) 28%);
-  padding: 18px 0 max(10px, env(safe-area-inset-bottom));
+  padding: 18px 0 max(10px, var(--safe-bottom));
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -531,6 +540,27 @@ mark {
   font-weight: 700;
 }
 
+/* The session header is two competing labels on a narrow screen. Neither may
+   wrap into two lines — at 150% text that pushes the exercise card down and eats
+   a third of the viewport. The unit title truncates instead. */
+.session-meta {
+  gap: 12px;
+  align-items: baseline;
+}
+
+.session-pos {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.session-unit {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
 /* ---------- progress ---------- */
 
 .meter {
@@ -777,7 +807,7 @@ mark {
   gap: 2px;
   background: var(--surface);
   border-top: 1px solid var(--border);
-  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  padding: 6px 4px calc(6px + var(--safe-bottom));
   margin: 12px calc(var(--gap) * -1) 0;
 }
 

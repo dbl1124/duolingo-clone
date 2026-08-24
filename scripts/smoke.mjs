@@ -221,30 +221,50 @@ try {
   else pass('due reviews are picked up on a later day');
 
   await page.getByRole('button', { name: 'Start', exact: true }).click();
+
+  // A returning learner now gets the opening recap first.
+  const recapIntro = page.getByRole('button', { name: 'Start the check' });
+  if (await recapIntro.isVisible()) {
+    const introText = await page.locator('.card').first().innerText();
+    if (!/Quick check on Unit/.test(introText)) fail(`recap intro did not render: ${introText}`);
+    else pass('a returning learner is offered a recap of the last unit');
+    await recapIntro.click();
+
+    const label = await page.locator('.prompt-label').first().innerText();
+    if (!/what does this mean|how do you say/i.test(label))
+      fail(`recap used an unexpected framing: ${label}`);
+    else pass(`recap opens with the asked-for framing ("${label.toLowerCase()}")`);
+  } else {
+    fail('returning learner was not offered a recap');
+  }
+
   await page.locator('.prompt-label').first().waitFor({ timeout: 5000 });
 
-  // Walk until a typed prompt appears, then answer it correctly.
+  // Walk the session, answering whatever is on screen, until a typed prompt has
+  // been answered correctly. Driven by which controls are present rather than by
+  // the prompt wording, so a new exercise framing does not wedge the test.
+  const ANSWERS = {
+    hello: 'hola',
+    'thank you': 'gracias',
+    please: 'por favor',
+    yes: 'si',
+    no: 'no',
+    well: 'bien',
+    goodbye: 'adios',
+    sorry: 'perdon',
+  };
+
   let typedOk = false;
-  for (let step = 0; step < 40 && !typedOk; step++) {
-    const label = await page.locator('.prompt-label').first().innerText().catch(() => '');
-    if (/say this in spanish/i.test(label)) {
-      const want = await page.locator('.prompt').first().innerText();
-      const answers = {
-        hello: 'hola',
-        'thank you': 'gracias',
-        please: 'por favor',
-        yes: 'si',
-        no: 'no',
-        well: 'bien',
-        goodbye: 'adios',
-        sorry: 'perdon',
-      };
-      const answer = answers[want.trim().toLowerCase()];
+  for (let step = 0; step < 60 && !typedOk; step++) {
+    const input = page.locator('input[type="text"]');
+    if (await input.isVisible()) {
+      const want = (await page.locator('.prompt').first().innerText().catch(() => '')).trim();
+      const answer = ANSWERS[want.toLowerCase()];
       if (!answer) {
         await page.getByRole('button', { name: /I don't know/ }).click();
       } else {
         // Deliberately typed without accents — this must still be graded correct.
-        await page.locator('input[type="text"]').fill(answer);
+        await input.fill(answer);
         await page.getByRole('button', { name: 'Check', exact: true }).click();
         const verdict = await page.locator('.feedback').first().getAttribute('class');
         if (!verdict?.includes('correct')) {

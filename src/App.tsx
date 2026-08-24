@@ -59,6 +59,7 @@ export default function App() {
       ...DEFAULT_SESSION_CONFIG,
       dailyNewCap: state.settings.dailyNewCap,
       targetItems: state.settings.targetItems,
+      warmup: state.settings.warmup,
       now,
       // The ladder only offers a spoken prompt when the device can hear one and the
       // learner has asked for it. Everything degrades to typing otherwise.
@@ -68,7 +69,14 @@ export default function App() {
       },
       seed: Math.floor(now / 60_000),
     }),
-    [state.settings.dailyNewCap, state.settings.targetItems, state.settings.micEnabled, now, voiceReady],
+    [
+      state.settings.dailyNewCap,
+      state.settings.targetItems,
+      state.settings.micEnabled,
+      state.settings.warmup,
+      now,
+      voiceReady,
+    ],
   );
 
   const start = useCallback(
@@ -76,7 +84,11 @@ export default function App() {
       const fresh = Date.now();
       setNow(fresh);
       clearSessionLog();
-      const items = buildSession(state.states, { ...cfg, now: fresh, minimal });
+      const items = buildSession(
+        state.states,
+        { ...cfg, now: fresh, minimal },
+        currentRetrievability,
+      );
       if (items.length > 0) setScreen({ view: 'session', items });
     },
     [state.states, cfg],
@@ -249,6 +261,20 @@ function Complete({
 
   return (
     <div className="stack">
+      {summary.warmup && (
+        <section className="card">
+          <div className="card-title">The opening check</div>
+          <h2 style={{ marginBottom: 4 }}>
+            {summary.warmup.correct} of {summary.warmup.asked} from last time
+          </h2>
+          <p className="dim small" style={{ marginBottom: 0 }}>
+            {summary.warmup.correct === summary.warmup.asked
+              ? 'All of it held. Those intervals just got longer.'
+              : 'Whatever slipped is already back near the front of the queue.'}
+          </p>
+        </section>
+      )}
+
       <section className="card">
         <h2>Session done</h2>
         <div className="stat-grid" style={{ marginTop: 12 }}>

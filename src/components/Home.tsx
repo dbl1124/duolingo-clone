@@ -26,7 +26,10 @@ export function Home({
   onStart: () => void;
   onStartMinimal: () => void;
 }) {
-  const f = useMemo(() => forecast(state.states, cfg), [state.states, cfg]);
+  const f = useMemo(
+    () => forecast(state.states, cfg, currentRetrievability),
+    [state.states, cfg],
+  );
   const progress = useMemo(
     () => unitProgress(state.states, cfg.now, currentRetrievability),
     [state.states, cfg.now],
@@ -65,6 +68,7 @@ export function Home({
               )}
               {f.due > 0 && f.newAvailable > 0 && ' · '}
               {f.newAvailable > 0 && <>{f.newAvailable} new</>}
+              {f.warmup > 0 && <> · opens with a {f.warmup}-question check</>}
             </p>
           </>
         )}
