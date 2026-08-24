@@ -70,7 +70,7 @@ npm run dev        # http://localhost:5173
 ```
 
 ```bash
-npm test           # 115 unit tests: scheduler, session builder, content integrity
+npm test           # 133 unit tests: scheduler, session builder, content integrity
 npm run typecheck
 npm run smoke      # builds, then drives the real app in Chromium
 npm run check      # all three
