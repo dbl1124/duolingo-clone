@@ -1,0 +1,33 @@
+{
+  "name": "Hablo — Spanish practice",
+  "short_name": "Hablo",
+  "description": "Ten minutes of Spanish a day, scheduled by a spaced-repetition model and built around producing the language rather than recognising it.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f4ef",
+  "theme_color": "#1b4d5c",
+  "lang": "en",
+  "categories": ["education"],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

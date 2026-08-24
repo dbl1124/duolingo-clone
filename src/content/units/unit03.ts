@@ -1,0 +1,150 @@
+import type { Unit } from '../types';
+
+export const unit03: Unit = {
+  id: 'u3',
+  n: 3,
+  title: 'How you are, where things are',
+  canDo: 'Say how you feel, ask where something is, and choose correctly between the two Spanish verbs for "to be".',
+  scenario: 'Answering "¿cómo está?" honestly, and finding the bathroom.',
+
+  grammar: [
+    {
+      id: 'u3.g.estar',
+      title: 'estar — the "is" of condition and place',
+      summary:
+        '**Estar** covers how something *is right now* and *where* it is. Moods, conditions, locations — anything that could be different tomorrow.',
+      body: [
+        'The forms: **estoy** (I am), **estás** (you are, informal), **está** (he/she/it is, you are formal), **estamos** (we are), **están** (they are).',
+        'Note the accents — *estás*, *está*, *están* are all stressed on the last syllable. Say "es-TOY", "es-TAH". Getting this wrong makes the word hard to recognise even when every letter is right.',
+        'Two jobs. First, condition: tired, happy, sick, busy, ready, cold. Second, location — *all* location, permanent or not. A mountain has not moved in a million years and it still takes estar: "Monterrey está en México".',
+        'This gives you the most useful question in travel: **¿dónde está...?** — where is...? Attach any noun and you have a working sentence.',
+      ],
+      examples: [
+        { es: 'Estoy bien, gracias.', en: 'I am well, thank you.', hl: 'Estoy' },
+        { es: '¿Dónde está el baño?', en: 'Where is the bathroom?', hl: 'está' },
+        { es: 'Estamos muy cansados.', en: 'We are very tired.', hl: 'Estamos' },
+        { es: 'El hotel está cerca.', en: 'The hotel is nearby.', hl: 'está' },
+      ],
+      hook: 'From Latin *stare*, "to stand" — the root of "state", "status", "stance", "stationary", "circumstance". Estar is the being that is *standing there for now*.',
+    },
+    {
+      id: 'u3.g.ser-estar',
+      title: 'ser vs estar — the one that actually matters',
+      summary:
+        'Ser is what something **is**. Estar is how or where something **is right now**. If you could imagine it being different next week, use estar.',
+      body: [
+        'English fuses these into one verb, which is why this feels like an artificial distinction. It is not. Latin had both, and Spanish kept both. English is the odd one out.',
+        'The etymology does the work here. **Ser** comes from *sedere*, to sit — the root of "sedentary" and "reside". **Estar** comes from *stare*, to stand — the root of "state" and "stance". Sitting is what you settled into; standing is where you happen to be. Almost every use follows from that image.',
+        'Ser: identity, origin, nationality, profession, material, ownership, and traits you would put on a passport. Estar: location, mood, physical condition, and anything in progress.',
+        'The clean test: **ser = what it is, estar = how it is.** "Mi esposa es doctora" (that is her profession). "Mi esposa está cansada" (that is today).',
+        'Some adjectives change meaning depending on which verb you pick, and this is where it stops being grammar and starts being vocabulary. Learn these as pairs.',
+      ],
+      examples: [
+        { es: 'Es aburrido.', en: 'He is boring. (his personality)', hl: 'Es' },
+        { es: 'Está aburrido.', en: 'He is bored. (right now)', hl: 'Está' },
+        { es: 'Es listo.', en: 'He is clever. (a trait)', hl: 'Es' },
+        { es: 'Está listo.', en: 'He is ready. (right now)', hl: 'Está' },
+        { es: 'La manzana es verde.', en: 'The apple is green. (a green variety)', hl: 'es' },
+        { es: 'La manzana está verde.', en: 'The apple is unripe.', hl: 'está' },
+      ],
+      pitfall:
+        'The error English speakers make constantly is "soy bien" for "I am fine". It is always **estoy bien** — being fine is a condition, not an identity. If you only remember one correction from this unit, make it that one.',
+    },
+  ],
+
+  pron: {
+    id: 'u3.p.r',
+    title: 'The two r sounds, and why one of them is easier than you think',
+    summary:
+      'Spanish has a short tapped **r** and a long trilled **rr**. The tap is a sound you already make in English every day. The trill is the same tap, held.',
+    body: [
+      'The single tap first, because you already own it. Say "butter" or "ladder" the American way. That quick flick of the tongue against the ridge behind your teeth *is* the Spanish r. "Pero" is very close to how an American says "pedo" in "torpedo". You are not learning a new sound — you are learning to spell one you already have.',
+      'The trill is the same contact point with air pushed through hard enough to make the tongue tip flutter. It is aerodynamics, not muscle: pushing harder with the tongue makes it worse, because a tense tongue cannot vibrate. Relax the tongue and increase the air.',
+      'A drill that works: say "PRRR" as though imitating a cat purring or a cold shiver, without any Spanish attached. Once the flutter happens on its own, attach it to *perro*, *carro*, *rojo*.',
+      'Where the trill is required: written **rr** between vowels, and any **r** starting a word (*rojo*, *rápido*) or following n, l, s (*Enrique*, *alrededor*). Everywhere else it is the easy tap.',
+      'If the trill will not come, use the tap everywhere and move on. Every native speaker will understand you, some regions barely trill at all, and it commonly takes months. It is not a gate on the rest of the language.',
+    ],
+    pairs: [
+      { a: 'pero', b: 'perro', aEn: 'but', bEn: 'dog', contrast: 'tap vs trill' },
+      { a: 'caro', b: 'carro', aEn: 'expensive', bEn: 'car', contrast: 'tap vs trill' },
+      { a: 'coro', b: 'corro', aEn: 'choir', bEn: 'I run', contrast: 'tap vs trill' },
+      { a: 'ahora', b: 'ahorra', aEn: 'now', bEn: 'he saves', contrast: 'tap vs trill' },
+    ],
+  },
+
+  items: [
+    { id: 'u3.estoy', es: 'estoy', en: 'I am (condition)', pos: 'verb', rank: 90, note: 'From estar — mood or location, never identity.' },
+    { id: 'u3.estas', es: 'estás', en: 'you are (informal, condition)', pos: 'verb', register: 'informal' },
+    { id: 'u3.esta', es: 'está', en: 'he/she/it is (condition)', enAlt: ['you are (formal)', 'it is'], pos: 'verb', rank: 55 },
+    { id: 'u3.estamos', es: 'estamos', en: 'we are (condition)', pos: 'verb' },
+    { id: 'u3.estan', es: 'están', en: 'they are (condition)', pos: 'verb' },
+    {
+      id: 'u3.donde-esta',
+      es: '¿dónde está?',
+      en: 'where is it?',
+      pos: 'phrase',
+      rank: 120,
+      note: 'Attach any noun: ¿dónde está el baño? ¿dónde está el hotel?',
+    },
+    {
+      id: 'u3.el-bano',
+      es: 'el baño',
+      en: 'the bathroom',
+      pos: 'noun',
+      gender: 'm',
+      hook: 'Root of "bath" and "bathe". "¿Dónde está el baño?" earns its place near the top of any phrasebook.',
+    },
+    { id: 'u3.aqui', es: 'aquí', en: 'here', pos: 'adv', rank: 75 },
+    { id: 'u3.alli', es: 'allí', en: 'there', pos: 'adv' },
+    { id: 'u3.cansado', es: 'cansado', en: 'tired', pos: 'adj', gender: 'm', note: 'A woman says *cansada*.' },
+    {
+      id: 'u3.contento',
+      es: 'contento',
+      en: 'happy',
+      pos: 'adj',
+      gender: 'm',
+      hook: 'Same root as English "content" — satisfied, held together. *Feliz* is the deeper, more lasting kind of happy.',
+    },
+    { id: 'u3.enfermo', es: 'enfermo', en: 'sick', pos: 'adj', gender: 'm', hook: 'Root of "infirm" and "infirmary" — literally "not firm".' },
+    { id: 'u3.ocupado', es: 'ocupado', en: 'busy', enAlt: ['occupied'], pos: 'adj', gender: 'm' },
+    {
+      id: 'u3.listo',
+      es: 'listo',
+      en: 'ready',
+      enAlt: ['clever'],
+      pos: 'adj',
+      gender: 'm',
+      note: '*Estar listo* = ready. *Ser listo* = clever. The verb decides which.',
+    },
+    { id: 'u3.mal', es: 'mal', en: 'badly', enAlt: ['bad', 'unwell'], pos: 'adv', hook: 'The *mal-* of "malady", "malignant", "malfunction".' },
+    {
+      id: 'u3.mas-o-menos',
+      es: 'más o menos',
+      en: 'so-so',
+      enAlt: ['more or less', 'okay'],
+      pos: 'phrase',
+      literal: 'more or less',
+      note: 'The honest answer to "¿cómo está?" when "bien" would be a lie. Very widely used.',
+    },
+    { id: 'u3.muy', es: 'muy', en: 'very', pos: 'adv', rank: 42 },
+    { id: 'u3.un-poco', es: 'un poco', en: 'a little', pos: 'phrase', note: '"Hablo un poco de español" — a genuinely useful hedge.' },
+    { id: 'u3.cerca', es: 'cerca', en: 'nearby', enAlt: ['close', 'near'], pos: 'adv', hook: 'Root of "circle" and "circa" — within the ring.' },
+    { id: 'u3.lejos', es: 'lejos', en: 'far', pos: 'adv' },
+    { id: 'u3.el-hotel', es: 'el hotel', en: 'the hotel', pos: 'noun', gender: 'm' },
+    { id: 'u3.hoy', es: 'hoy', en: 'today', pos: 'adv', rank: 110 },
+  ],
+
+  sentences: [
+    { id: 'u3.s1', es: 'Estoy bien, gracias.', en: 'I am well, thank you.', uses: ['u3.estoy'], cloze: 'Estoy' },
+    { id: 'u3.s2', es: '¿Dónde está el baño?', en: 'Where is the bathroom?', uses: ['u3.donde-esta', 'u3.el-bano'], cloze: '¿Dónde está' },
+    { id: 'u3.s3', es: 'Estoy muy cansado hoy.', en: 'I am very tired today.', uses: ['u3.estoy', 'u3.muy', 'u3.cansado', 'u3.hoy'], cloze: 'cansado' },
+    { id: 'u3.s4', es: 'El hotel está cerca.', en: 'The hotel is nearby.', uses: ['u3.esta', 'u3.el-hotel', 'u3.cerca'], cloze: 'está cerca' },
+    { id: 'u3.s5', es: 'Más o menos.', en: 'So-so.', uses: ['u3.mas-o-menos'], cloze: 'Más o menos' },
+    { id: 'u3.s6', es: 'Mi esposa está enferma hoy.', en: 'My wife is sick today.', uses: ['u3.esta', 'u3.enfermo', 'u3.hoy'], cloze: 'está enferma' },
+    { id: 'u3.s7', es: 'No está aquí, está allí.', en: 'It is not here, it is there.', uses: ['u3.esta', 'u3.aqui', 'u3.alli'], cloze: 'está allí' },
+    { id: 'u3.s8', es: 'Hablo un poco de español.', en: 'I speak a little Spanish.', uses: ['u3.un-poco'], cloze: 'un poco' },
+    { id: 'u3.s9', es: 'Estamos listos.', en: 'We are ready.', uses: ['u3.estamos', 'u3.listo'], cloze: 'Estamos listos' },
+    { id: 'u3.s10', es: 'El aeropuerto está muy lejos.', en: 'The airport is very far.', uses: ['u3.esta', 'u3.muy', 'u3.lejos'], cloze: 'está muy lejos' },
+    { id: 'u3.s11', es: 'Ella es doctora, pero hoy está ocupada.', en: 'She is a doctor, but today she is busy.', uses: ['u3.esta', 'u3.ocupado', 'u3.hoy'], cloze: 'está ocupada' },
+  ],
+};
