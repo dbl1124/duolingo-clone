@@ -15,6 +15,12 @@ export interface Settings {
   textScale: number;
   /** Playback rate for Spanish audio. */
   audioRate: number;
+  /**
+   * A specific device voice to speak with, or null to use the best one found.
+   * Stored as a voiceURI, which is stable on a given device but meaningless on
+   * another — the picker falls back to auto when it is not installed here.
+   */
+  voiceURI: string | null;
   /** Whether to ask for spoken answers at all. */
   micEnabled: boolean;
   /** Show the etymology and cognate notes on teach screens. */
@@ -36,6 +42,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   textScale: 1.15,
   audioRate: 0.8,
+  voiceURI: null,
   micEnabled: true,
   showHooks: true,
   dailyNewCap: 6,

@@ -34,8 +34,14 @@ export default function App() {
 
   useEffect(() => {
     void init();
-    void primeVoices().then(setVoiceReady);
   }, []);
+
+  // Voices load asynchronously and the learner's pinned choice arrives with the
+  // settings, so this waits for both rather than resolving a voice at boot.
+  useEffect(() => {
+    if (!state.loaded) return;
+    void primeVoices(state.settings.voiceURI).then(setVoiceReady);
+  }, [state.loaded, state.settings.voiceURI]);
 
   // Apply reading preferences to the document rather than threading them through
   // every component.

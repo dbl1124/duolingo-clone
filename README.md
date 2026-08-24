@@ -109,6 +109,14 @@ scripts/
 the device's own Spanish voices, which means all 365 cards have audio and the app
 works on a plane.
 
+**Voices are scored, not taken in listed order.** Phones ship several Spanish
+voices of very different quality, and the default is often the old "compact"
+formant synthesiser — the robotic one. `src/speech/tts.ts` ranks them by engine
+quality first and region second, on the grounds that the gap between a neural
+voice and a formant synthesiser dwarfs the gap between Spanish varieties.
+Settings lists every installed voice with a preview so the choice can be
+overridden, and explains how to download a better one.
+
 **One card per item, not one per exercise type.** Separate cards for
 recognise/produce/speak would triple the daily review load, which a ten-minute
 session cannot absorb honestly.
