@@ -71,7 +71,7 @@ Settings → Accessibility → Spoken Content may simply be unreachable. Recorde
 clips sidestep that entirely.
 
 `npm run audio` generates one MP3 per distinct line of Spanish with ElevenLabs.
-The whole curriculum is **415 clips, about 5,000 characters** — comfortably
+The whole curriculum is **710 clips, about 8,750 characters** — comfortably
 inside a free month's quota.
 
 ```bash
@@ -108,7 +108,7 @@ npm run dev        # http://localhost:5173
 ```
 
 ```bash
-npm test           # 133 unit tests: scheduler, session builder, content integrity
+npm test           # 195 unit tests: scheduler, session builder, generator, content
 npm run typecheck
 npm run smoke      # builds, then drives the real app in Chromium
 npm run check      # all three
@@ -122,12 +122,14 @@ secure, so a desktop browser is fine for everything except testing the install.
 
 ```
 src/
-  content/          the curriculum — 10 units, 365 cards, hand-authored
+  content/          the curriculum — 16 units, 641 cards, hand-authored
     types.ts        content model
-    units/          unit01…unit10
+    units/          unit01…unit16
+    patterns.ts     sentence frames that generate new sentences on demand
   srs/fsrs.ts       FSRS-5 scheduler (stability, difficulty, forgetting curve)
   session/
     ladder.ts       which exercise type an item has earned
+    generate.ts     realising a pattern into one sentence you have not seen
     builder.ts      what today's session contains, and in what order
   lib/
     answer.ts       answer checking — accent-tolerant, typo-tolerant
@@ -144,7 +146,7 @@ scripts/
 ## Notable implementation choices
 
 **Everything is local.** No account, no server, no network calls. Audio comes from
-the device's own Spanish voices, which means all 365 cards have audio and the app
+the device's own Spanish voices, which means every card has audio and the app
 works on a plane.
 
 **Voices are scored, not taken in listed order.** Phones ship several Spanish
@@ -164,6 +166,22 @@ restarted. The subscription is permanent, the ranking updates live, and Settings
 has a Rescan button plus a panel showing the raw list the browser reports — so
 "the browser is not exposing it" is distinguishable from "the app did not look
 again".
+
+**Sentences are generated, not only memorised.** A third kind of card holds a
+grammatical *frame* rather than a fixed line — `ir a` + infinitive, `gustar`
+with its backwards agreement, the preterite. Every time one comes up the slots
+are filled differently, so the answer cannot be recalled, only constructed.
+Eighteen frames currently span about 2,300 sentences against 189 fixed ones, and
+a frame only unlocks once at least two of its slots have two or more words the
+learner has actually met — otherwise it would be a fixed phrase in disguise.
+
+**Nothing in the generator is derived by rule.** Conjugations are written out and
+agreement is explicit, because a generator that guesses at morphology will
+eventually teach a wrong form with complete confidence. `generate.test.ts`
+expands every sentence every frame can produce — all 2,300 — and checks them
+structurally. The two bugs it could not catch, "Hace sol por la noche" and "La
+tienda es más rica", were both flawless Spanish describing something false, and
+were found by reading the output.
 
 **One card per item, not one per exercise type.** Separate cards for
 recognise/produce/speak would triple the daily review load, which a ten-minute
@@ -193,3 +211,9 @@ changes. The content test suite enforces the invariants that would otherwise fai
 silently at runtime: cloze targets must appear verbatim in their sentence, grammar
 highlights must exist in their example, a sentence may not use vocabulary from a
 later unit, and no emphasis marker may reach the reader unparsed.
+
+Adding vocabulary also widens the sentence frames for free: the shared filler
+pools in `patterns.ts` name the cards each filler needs, so a verb added in a
+late unit starts appearing in `ir a` and `tener que` the day the learner meets
+it. Units 11-16 pushed `ir a` from 550 generated sentences to 950 without that
+pattern being edited.
