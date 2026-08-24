@@ -60,7 +60,7 @@ export const unit04: Unit = {
     { id: 'u4.la-art', es: 'la', en: 'the (feminine)', pos: 'det', rank: 4 },
     { id: 'u4.el-agua', es: 'el agua', en: 'the water', pos: 'noun', gender: 'f', note: 'Feminine noun, masculine article. Say "el agua fría".' },
     { id: 'u4.el-cafe', es: 'un café', en: 'a coffee', pos: 'noun', gender: 'm' },
-    { id: 'u4.la-cerveza', es: 'una cerveza', en: 'a beer', pos: 'noun', gender: 'f', hook: 'From Latin *cervisia*. Unrelated to "beer" — but the same root gives us "Ceres", goddess of grain.' },
+    { id: 'u4.la-cerveza', es: 'una cerveza', en: 'a beer', pos: 'noun', gender: 'f', hook: 'From Latin *cervisia*, which the Romans borrowed from a Celtic language — they were wine drinkers and took the beer word from their neighbours. Unrelated to English "beer", which is Germanic.' },
     { id: 'u4.la-cuenta', es: 'la cuenta', en: 'the bill', enAlt: ['the check'], pos: 'noun', gender: 'f', hook: 'Root of "count", "account", "counter". You are asking for the tally.' },
     { id: 'u4.la-mesa', es: 'la mesa', en: 'the table', pos: 'noun', gender: 'f', hook: 'A flat-topped hill in the American Southwest is a *mesa* — same word, borrowed whole.' },
     { id: 'u4.el-menu', es: 'el menú', en: 'the menu', pos: 'noun', gender: 'm' },

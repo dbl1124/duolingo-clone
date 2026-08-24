@@ -96,7 +96,7 @@ export const unit14: Unit = {
     { id: 'u14.llegue', es: 'llegué', en: 'I arrived', pos: 'verb', note: 'The *u* is silent — it is there to keep the *g* hard before *é*.' },
     { id: 'u14.me-gusto', es: 'me gustó', en: 'I liked it', pos: 'phrase', literal: 'it pleased me', note: 'Still backwards, now in the past. *¿Le gustó?* — did you like it?' },
     { id: 'u14.ayer', es: 'ayer', en: 'yesterday', pos: 'adv' },
-    { id: 'u14.anoche', es: 'anoche', en: 'last night', pos: 'adv', literal: 'to-night', note: 'Not to be confused with *esta noche*, which is tonight, still to come.' },
+    { id: 'u14.anoche', es: 'anoche', en: 'last night', pos: 'adv', note: 'The night that has already happened. *Esta noche* is tonight, still to come — the two are a day apart and one letter of English away from each other.' },
     { id: 'u14.pasado', es: 'pasado', en: 'last', enAlt: ['past'], pos: 'adj', note: 'Goes after the noun: *la semana pasada*, *el año pasado*.' },
     { id: 'u14.la-semana-pasada', es: 'la semana pasada', en: 'last week', pos: 'phrase' },
     { id: 'u14.el-mes', es: 'el mes', en: 'the month', pos: 'noun', gender: 'm', hook: 'Same root as "month" and "moon" — a month was one cycle of it, in Latin and in English alike.' },

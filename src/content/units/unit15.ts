@@ -79,7 +79,7 @@ export const unit15: Unit = {
     { id: 'u15.el-pescado', es: 'el pescado', en: 'the fish', pos: 'noun', gender: 'm', note: 'The fish you eat. A fish still swimming is *un pez*.' },
     { id: 'u15.las-verduras', es: 'las verduras', en: 'the vegetables', pos: 'noun', gender: 'f', hook: 'From *verde*, green — the green things.' },
     { id: 'u15.la-fruta', es: 'la fruta', en: 'the fruit', pos: 'noun', gender: 'f' },
-    { id: 'u15.el-arroz', es: 'el arroz', en: 'the rice', pos: 'noun', gender: 'm', hook: 'From Arabic *ar-ruzz*. Eight centuries of Al-Andalus left Spanish around a thousand Arabic words, and most of them start with the *al-* or *a-* that was the Arabic article.' },
+    { id: 'u15.el-arroz', es: 'el arroz', en: 'the rice', pos: 'noun', gender: 'm', hook: 'From Arabic *ar-ruzz*. A great many of the Arabic words Spanish kept still carry the *al-* or *a-* that was the Arabic article, welded on: *arroz*, *azúcar*, *almohada*, *aceite*.' },
     { id: 'u15.los-frijoles', es: 'los frijoles', en: 'the beans', pos: 'noun', gender: 'm', note: 'Mexican usage. Spain says *judías*, elsewhere *porotos*.' },
     { id: 'u15.el-queso', es: 'el queso', en: 'the cheese', pos: 'noun', gender: 'm', hook: 'Latin *caseus* — the same root that gave English "cheese" through a different door.' },
     { id: 'u15.los-huevos', es: 'los huevos', en: 'the eggs', pos: 'noun', gender: 'm' },

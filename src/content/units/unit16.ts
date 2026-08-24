@@ -101,7 +101,7 @@ export const unit16: Unit = {
     { id: 'u16.amable', es: 'amable', en: 'kind', pos: 'adj', hook: 'Literally "loveable" — from *amar*. *Muy amable* is how you thank someone for a small kindness.' },
     { id: 'u16.la-vez', es: 'la vez', en: 'the time (occasion)', pos: 'noun', gender: 'f', note: 'Not the clock. *Otra vez* — again, which you already know.' },
     { id: 'u16.primera-vez', es: 'la primera vez', en: 'the first time', pos: 'phrase', note: '*Es mi primera vez aquí* — the sentence that explains everything about you at once.' },
-    { id: 'u16.cuanto-tiempo', es: '¿cuánto tiempo?', en: 'how long?', pos: 'phrase', note: '*¿Cuánto tiempo está aquí?* — how long are you here for?' },
+    { id: 'u16.cuanto-tiempo', es: '¿cuánto tiempo?', en: 'how long?', pos: 'phrase', note: 'For a stay still ahead of you: *¿Cuánto tiempo va a estar aquí?* For one already under way, Spanish uses *llevar* — *¿Cuánto tiempo lleva aquí?*, how long have you been here.' },
   ],
 
   sentences: [
@@ -119,6 +119,6 @@ export const unit16: Unit = {
     { id: 'u16.s12', es: '¡Qué lástima!', en: 'What a shame!', uses: ['u16.que-lastima'], cloze: 'lástima' },
     { id: 'u16.s13', es: 'Entonces, ¿va a regresar?', en: 'So, are you going to come back?', uses: ['u16.entonces', 'u9.va', 'u9.regresar'], cloze: 'Entonces' },
     { id: 'u16.s14', es: 'Es una ciudad muy bonita.', en: 'It is a very pretty city.', uses: ['u16.la-ciudad', 'u16.bonito'], cloze: 'bonita' },
-    { id: 'u16.s15', es: '¿Cuánto tiempo está aquí?', en: 'How long are you here for?', uses: ['u16.cuanto-tiempo', 'u3.esta'], cloze: 'Cuánto tiempo' },
+    { id: 'u16.s15', es: '¿Cuánto tiempo va a estar aquí?', en: 'How long are you going to be here?', uses: ['u16.cuanto-tiempo', 'u9.va'], cloze: 'Cuánto tiempo' },
   ],
 };

@@ -157,7 +157,7 @@ export const unit01: Unit = {
       en: "you're welcome",
       pos: 'phrase',
       literal: 'of nothing',
-      hook: '*Nada* is the root of "annihilate". You are saying "it was nothing" — the same move English makes with "no worries".',
+      hook: '*Nada* is literally "a thing born". Latin said *nulla res nata* — "no born thing" — and Spanish kept only the last word, which absorbed the whole negative. Same root as "native", "nascent" and "nature".',
     },
     {
       id: 'u1.por-favor',

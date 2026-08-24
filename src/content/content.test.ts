@@ -207,6 +207,87 @@ describe('pronunciation focuses', () => {
   });
 });
 
+describe('written Spanish', () => {
+  /**
+   * Checks that catch whole classes of error mechanically. None of them can tell
+   * you a translation is wrong — only a reader can — but each one closes a way
+   * of being wrong that is easy to introduce and hard to notice.
+   */
+
+  /** Every Spanish string a learner ever sees. */
+  function everySpanishString(): { where: string; text: string }[] {
+    const out: { where: string; text: string }[] = [];
+    for (const item of lexItems()) out.push({ where: item.id, text: item.es });
+    for (const s of sentences()) out.push({ where: s.id, text: s.es });
+    for (const u of units) {
+      for (const g of u.grammar) {
+        g.examples.forEach((e, i) => out.push({ where: `${g.id}.ex[${i}]`, text: e.es }));
+      }
+      for (const p of u.pron?.pairs ?? []) {
+        out.push({ where: `${u.pron!.id}.a`, text: p.a });
+        out.push({ where: `${u.pron!.id}.b`, text: p.b });
+      }
+    }
+    return out;
+  }
+
+  it('gives a noun the article its declared gender calls for', () => {
+    // A masculine article on an item marked feminine means one of the two is
+    // wrong, and the learner is taught a wrong gender either way.
+    const bad: string[] = [];
+    for (const i of lexItems()) {
+      // agua is feminine and takes el, to keep two stressed a-sounds apart. It
+      // is the documented exception, not a mistake.
+      if (i.es === 'el agua') continue;
+      if (/^(el|los|un)\s/.test(i.es) && i.gender === 'f') bad.push(`${i.id} "${i.es}" is marked feminine`);
+      if (/^(la|las|una)\s/.test(i.es) && i.gender === 'm') bad.push(`${i.id} "${i.es}" is marked masculine`);
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('closes every ¿ and ¡ it opens', () => {
+    const bad = everySpanishString().filter(({ text }) => {
+      const count = (re: RegExp) => (text.match(re) ?? []).length;
+      return count(/\?/g) !== count(/¿/g) || count(/!/g) !== count(/¡/g);
+    });
+    expect(bad.map((b) => `${b.where}: ${b.text}`)).toEqual([]);
+  });
+
+  it('never spells the same word two ways unless the pair is a real one', () => {
+    /**
+     * A missing accent is invisible to every other check here: "esta" and "está"
+     * are both words, so nothing flags one standing where the other belongs.
+     * What this can catch is the same letters appearing both with and without an
+     * accent across the curriculum. Most such pairs are genuine — sé/se are
+     * different words — so the real ones are listed and anything new fails,
+     * which is the only way a typo of this kind surfaces at all.
+     */
+    const KNOWN_PAIRS = [
+      'como', // cómo (how) / como (I eat, like)
+      'esta', // está (is) / esta (this)
+      'de', // dé (give) / de (of)
+      'se', // sé (I know) / se (reflexive)
+      'gusto', // gustó (it pleased) / gusto (pleasure)
+      'el', // él (he) / el (the)
+      'mi', // mí (me) / mi (my)
+      'que', // qué (what) / que (that)
+    ];
+    const strip = (w: string) => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const spellings = new Map<string, Set<string>>();
+    for (const { text } of everySpanishString()) {
+      for (const word of text.toLowerCase().match(/[a-záéíóúüñ]+/g) ?? []) {
+        const key = strip(word);
+        if (!spellings.has(key)) spellings.set(key, new Set());
+        spellings.get(key)!.add(word);
+      }
+    }
+    const unexpected = [...spellings.entries()]
+      .filter(([key, forms]) => forms.size > 1 && !KNOWN_PAIRS.includes(key))
+      .map(([, forms]) => [...forms].join(' / '));
+    expect(unexpected).toEqual([]);
+  });
+});
+
 describe('curriculum size', () => {
   it('holds enough material for months of ten-minute sessions', () => {
     // At six new cards a day, this is the point where the review load, not the

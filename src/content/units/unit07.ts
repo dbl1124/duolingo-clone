@@ -57,7 +57,7 @@ export const unit07: Unit = {
     { id: 'u7.que', es: 'qué', en: 'what', pos: 'pron', rank: 14 },
     { id: 'u7.porque', es: 'porque', en: 'because', pos: 'conj', note: '*Porque* is "because". *¿Por qué?* — two words, with accent — is "why".' },
     { id: 'u7.por-que', es: '¿por qué?', en: 'why?', pos: 'phrase' },
-    { id: 'u7.siempre', es: 'siempre', en: 'always', pos: 'adv', hook: 'Root of "sempiternal". *Siempre* + *verde* gives us "evergreen".' },
+    { id: 'u7.siempre', es: 'siempre', en: 'always', pos: 'adv', hook: 'Root of "sempiternal". Spanish builds *siempreverde* from *siempre* + *verde*, exactly the way English builds "evergreen" — same idea, assembled separately in each language.' },
     { id: 'u7.nunca', es: 'nunca', en: 'never', pos: 'adv' },
     { id: 'u7.a-veces', es: 'a veces', en: 'sometimes', pos: 'phrase', literal: 'at times' },
   ],

@@ -57,11 +57,13 @@ export const unit12: Unit = {
       id: 'u12.g.adj-agree',
       title: 'Adjectives that agree, and two that do not',
       summary:
-        'An adjective ending in **-o** changes to match: *bueno, buena, buenos, buenas*. One ending in **-e** or a consonant — *interesante*, *difícil* — only ever adds **-s** for plural.',
+        'An adjective ending in **-o** changes to match: *bueno, buena, buenos, buenas*. One ending in **-e** or a consonant — *interesante*, *difícil* — usually only adds **-s** for plural.',
       body: [
-        'You have been doing this since *cansado / cansada*. The rule generalises: *-o* adjectives have four forms, everything else has two.',
+        'You have been doing this since *cansado / cansada*. The rule generalises: *-o* adjectives have four forms, most others have two.',
         '**bueno** → bueno, buena, buenos, buenas. **interesante** → interesante, interesantes. **fácil** → fácil, fáciles.',
         'The agreement follows the noun, not you: *la comida es buena* even if the person saying it is a man. It is the food that is being described.',
+        'One group breaks the second half of that rule, and it is a group you use constantly: **nationalities**. An adjective of nationality ending in a consonant *does* take **-a** in the feminine. *Español* → **española**. *Inglés* → **inglesa**, losing its accent on the way. *Alemán* → **alemana**. So it is *una mujer española*, never "una mujer español".',
+        'Nationalities ending in *-e* behave normally and never change: *estadounidense* covers everyone.',
         '*Bueno* and *malo* drop their *-o* in front of a masculine singular noun: **un buen restaurante**, **un mal día**. Only there, and only for those two — this is worth knowing because you will hear it constantly.',
       ],
       examples: [
@@ -91,7 +93,7 @@ export const unit12: Unit = {
     { id: 'u12.creo-que', es: 'creo que', en: 'I think that', pos: 'phrase', note: 'The *que* is required even though English drops it.' },
     { id: 'u12.creo-que-si', es: 'creo que sí', en: 'I think so', pos: 'phrase' },
     { id: 'u12.la-musica', es: 'la música', en: 'the music', pos: 'noun', gender: 'f' },
-    { id: 'u12.la-pelicula', es: 'la película', en: 'the movie', enAlt: ['the film'], pos: 'noun', gender: 'f', hook: 'From *película*, "little skin" — the film in the photographic sense, then the thing shown on it.' },
+    { id: 'u12.la-pelicula', es: 'la película', en: 'the movie', enAlt: ['the film'], pos: 'noun', gender: 'f', hook: 'From Latin *pellicula*, "little skin" — the film in the photographic sense, then the thing shown on it.' },
     { id: 'u12.el-libro', es: 'el libro', en: 'the book', pos: 'noun', gender: 'm', hook: 'Latin *liber*, the inner bark of a tree — what people wrote on before paper. Same root as "library".' },
     { id: 'u12.viajar', es: 'viajar', en: 'to travel', pos: 'verb', hook: 'Same root as "voyage" — Latin *via*, a road.' },
     { id: 'u12.cocinar', es: 'cocinar', en: 'to cook', pos: 'verb' },

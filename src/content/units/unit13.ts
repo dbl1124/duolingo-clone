@@ -101,7 +101,7 @@ export const unit13: Unit = {
     { id: 'u13.la-casa', es: 'la casa', en: 'the house', enAlt: ['home'], pos: 'noun', gender: 'f', note: '*En casa* — at home, no article. *A casa* — homewards.' },
     { id: 'u13.el-trabajo', es: 'el trabajo', en: 'the job', enAlt: ['work'], pos: 'noun', gender: 'm', note: 'Same shape as *trabajo*, "I work" — the noun takes an article, the verb does not.' },
     { id: 'u13.todos-los-dias', es: 'todos los días', en: 'every day', pos: 'phrase' },
-    { id: 'u13.por-la-manana', es: 'por la mañana', en: 'in the morning', pos: 'phrase', note: '*Por* for a stretch of time, not *en*.' },
+    { id: 'u13.por-la-manana', es: 'por la mañana', en: 'in the morning', pos: 'phrase', note: 'Mexico says *en la mañana* just as readily — both are correct, and you have already met that version. Reserve *de la mañana* for clock times: *las ocho de la mañana*.' },
     { id: 'u13.por-la-noche', es: 'por la noche', en: 'at night', pos: 'phrase' },
     { id: 'u13.antes', es: 'antes', en: 'before', pos: 'adv', hook: 'Root of "ante-", as in "antecedent" — what comes in front.' },
     { id: 'u13.primero', es: 'primero', en: 'first', pos: 'adv', enAlt: ['firstly'] },

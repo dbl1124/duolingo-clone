@@ -122,6 +122,6 @@ export const unit11: Unit = {
     { id: 'u11.s10', es: 'No sé dónde está.', en: 'I do not know where it is.', uses: ['u11.se-fact', 'u3.donde-esta'], cloze: 'sé' },
     { id: 'u11.s11', es: 'Conozco México.', en: 'I know Mexico.', uses: ['u11.conozco'], cloze: 'Conozco' },
     { id: 'u11.s12', es: 'Nos vemos el lunes.', en: 'See you Monday.', uses: ['u11.nos-vemos', 'u9.el-lunes'], cloze: 'Nos vemos' },
-    { id: 'u11.s13', es: '¿Cómo se dice en español?', en: 'How do you say it in Spanish?', uses: ['u11.dice', 'u7.el-espanol'], cloze: 'se dice' },
+    { id: 'u11.s13', es: '¿Cómo se dice esto en español?', en: 'How do you say this in Spanish?', uses: ['u11.dice', 'u7.el-espanol'], cloze: 'se dice' },
   ],
 };
